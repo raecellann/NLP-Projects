@@ -1,0 +1,124 @@
+{
+  "word_map": {
+  "4k0": "ako",
+  "aq": "ako",
+  "k4": "ka",
+  "c0": "ko",
+  "n4": "na",
+  "m0": "mo",
+  "p0": "po",
+  "g4": "ga",
+  "g4nda": "ganda",
+  "m4g4nd4": "maganda",
+  "h3ll0": "hello",
+  "gud": "good",
+  "m0rn1ng": "morning",
+  "gn": "good night",
+  "nyt": "night",
+  "l8r": "later",
+  "txt": "text",
+  "w8": "wait",
+  "plz": "please",
+  "thx": "thanks",
+  "tnx": "thanks",
+  "lolz": "lol",
+  "frenz": "friends",
+  "cya": "see you",
+  "ur": "your",
+  "u": "you",
+  "bcoz": "because",
+  "luv": "love",
+  "h0w": "how",
+  "r": "are",
+  "d2": "dito",
+  "s0ri": "sorry",
+  "gudnyt": "goodnight",
+  "tkecr": "take care",
+  "misu": "miss you",
+  "jeje": "haha",
+  "nyc": "nice",
+  "wazup": "what's up",
+  "wer": "where",
+  "k0": "ko",
+  "s0br4": "sobra",
+  "k1t4": "kita",
+  "b3": "be",
+  "h4ppy": "happy",
+  "n0w": "now",
+  "c0rn": "corn",
+  "b4": "before", 
+  "w8": "wait",
+  "2": "too",
+  "l8": "late",
+  "diz": "this"
+  
+  },
+  "char_map": {
+    "a": ["4", "@"],
+    "b": ["b"],
+    "c": ["c"],
+    "d": ["d"],
+    "e": ["3"],
+    "f": ["f"],
+    "g": ["g"],
+    "h": ["h"],
+    "i": ["1", "!"],
+    "j": ["j"],
+    "k": ["k"],
+    "l": ["l"],
+    "m": ["m"],
+    "n": ["n"],
+    "o": ["0"],
+    "p": ["p"],
+    "q": ["q"],
+    "r": ["r"],
+    "s": ["s"],
+    "t": ["t"],
+    "u": ["u"],
+    "v": ["v"],
+    "w": ["w"],
+    "x": ["x"],
+    "y": ["y"],
+    "z": ["z"]
+  },
+
+  "emotion_keywords": {
+    "joy": [
+      "happy", "great", "awesome", "glad", "joy", "love", "excited", "fun",
+      "smile", "cheerful", "delighted", "amazing", "yay", "grateful", "wonderful",
+      "fantastic", "cool", "best", "laugh"
+    ],
+    "sadness": [
+      "sad", "cry", "hurt", "down", "broken", "depressed", "tears", "unhappy",
+      "heartbroken", "miserable", "pain", "lonely", "lost", "grief", "hopeless",
+      "blue", "sorrow", "wounded", "tragic"
+    ],
+    "anger": [
+      "mad", "angry", "rage", "furious", "hate", "annoyed", "irritated", "pissed",
+      "frustrated", "offended", "agitated", "yelled", "shouting", "resent", "grrr"
+    ],
+    "fear": [
+      "afraid", "scared", "terrified", "anxious", "nervous", "worried", "panic",
+      "fear", "alarmed", "horror", "fright", "creepy", "shiver", "dread", "phobia"
+    ],
+    "surprise": [
+      "wow", "shocked", "surprised", "unexpected", "no way", "whoa", "unbelievable",
+      "amazed", "omg", "what", "suddenly", "gasp", "didn't expect", "mind-blown"
+    ],
+    "disgust": [
+      "gross", "eww", "disgusting", "nasty", "repulsive", "revolting", "vomit",
+      "yuck", "ugh", "dirty", "sickening", "cringe", "filthy", "stinky", "offensive"
+    ]
+  },
+ "emoticon_map": {
+  ":)": "joy",
+  ">:(": "anger",
+  ":(": "sadness",
+  ":o": "surprise",
+  ":/": "disgust",
+  ":|": "neutral",
+  "D:": "fear"
+
+
+  }
+}

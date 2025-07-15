@@ -24,9 +24,7 @@ class JejemonZ:
                                 break
                             normalized = self.translator.normalize(user_input)
                             jejemonized = self.translator.jejemonize(normalized)
-                            emotion = self.translator.detect_emotion(user_input)
-                            emoji = self.translator.get_emoji(emotion)
-                            print(f"👾 Jejemon: {jejemonized}\n🧠 Emotion Detected: {emoji} {emotion.capitalize()}")
+                            print(f"👾 Jejemon: {jejemonized}")
                         except KeyboardInterrupt:
                             print("\n\nReturning to main menu...")
                             break
@@ -37,13 +35,11 @@ class JejemonZ:
                             if user_input.strip().lower() == 'back':
                                 break
                             normalized = self.translator.normalize(user_input)
-                            emotion = self.translator.detect_emotion(user_input)
-                            emoji = self.translator.get_emoji(emotion)
-                            print(f"📝 Normalized: {normalized}\n🧠 Emotion Detected: {emoji} {emotion.capitalize()}")
+                            print(f"📝 Normalized: {normalized}")
                         except KeyboardInterrupt:
                             print("\n\nReturning to main menu...")
                             break
                 else:
                     print("Invalid choice. Please select 1, 2, or 3.")
         except KeyboardInterrupt:
-            print("\n\nBye Bitch!👋") 
+            print("\n\nBye Bitch!👋")

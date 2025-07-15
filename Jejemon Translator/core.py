@@ -3,13 +3,10 @@ import json
 import os
 import random
 
+
 class Tokenizer:
     def __init__(self):
-        emoticons = r"[:;=8][\-o\*']?[\)\]dDpP(/\\|\[@]"
-        self.pattern = re.compile(
-            rf"(?:{emoticons})|\w+|[^\w\s]|\s+",
-            re.IGNORECASE
-        )
+        self.pattern = re.compile(r"\w+|[^\w\s]|\s+", re.IGNORECASE)
 
     def tokenize(self, text):
         return self.pattern.findall(text)
@@ -20,6 +17,7 @@ class JejemonNormalizer:
         data_path = os.path.join(os.path.dirname(__file__), 'data.json')
         with open(data_path, 'r', encoding='utf-8') as f:
             data = json.load(f)
+
         self.word_map = data["word_map"]
 
         flat_char_map = {}
@@ -65,7 +63,6 @@ class JejemonNormalizer:
         return self.preserve_casing(token, norm)
 
     def _multi_replace(self, text, replace_map):
-        # Sort keys by length (desc) to handle multi-char replacements first
         for key in sorted(replace_map, key=len, reverse=True):
             text = text.replace(key, replace_map[key])
         return text
@@ -101,34 +98,6 @@ class JejemonNormalizer:
         return "".join(jej_tokens)
 
 
-class TokenEmotionClassifier:
-    def __init__(self):
-        data_path = os.path.join(os.path.dirname(__file__), 'data.json')
-        with open(data_path, 'r', encoding='utf-8') as f:
-            data = json.load(f)
-        self.emotion_keywords = {k: set(v) for k, v in data["emotion_keywords"].items()}
-        self.emoticon_map = data["emoticon_map"]
-
-    def classify(self, tokens):
-        scores = {emotion: 0 for emotion in self.emotion_keywords}
-        for token in tokens:
-            word = token.lower()
-            if word in self.emoticon_map:
-                scores[self.emoticon_map[word]] += 2
-                continue
-            for emotion, keywords in self.emotion_keywords.items():
-                if word in keywords:
-                    scores[emotion] += 1
-        top_emotion = max(scores, key=lambda k: scores[k])
-        return top_emotion if scores[top_emotion] > 0 else "neutral"
-
-    def emoji(self, emotion):
-        return {
-            "joy": "😊", "anger": "😡", "sadness": "😢",
-            "fear": "😱", "surprise": "😲", "disgust": "🤢", "neutral": "😐"
-        }.get(emotion, "😐")
-
-
 def edit_distance(s1, s2):
     if len(s1) < len(s2):
         return edit_distance(s2, s1)
@@ -149,8 +118,9 @@ def edit_distance(s1, s2):
 def find_closest_word(word, word_list, max_distance=1):
     closest_word = None
     closest_distance = None
-    for candidate in word_list:         dist = edit_distance(word, candidate)
-    if closest_distance is None or dist < closest_distance:
+    for candidate in word_list:
+        dist = edit_distance(word, candidate)
+        if closest_distance is None or dist < closest_distance:
             closest_word = candidate
             closest_distance = dist
     if closest_distance is not None and closest_distance <= max_distance:

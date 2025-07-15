@@ -2,7 +2,8 @@ import tkinter as tk
 from tkinter import messagebox, filedialog, simpledialog
 from tkinter import ttk
 from translator import JejemonTranslator
-from PIL import Image, ImageDraw, ImageFont, ImageTk
+from PIL import Image, ImageDraw, ImageFont
+from PIL import ImageTk  # Ensure ImageTk is imported
 import os
 
 class JejemonGUI:

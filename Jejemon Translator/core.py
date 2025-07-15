@@ -27,7 +27,6 @@ class JejemonNormalizer:
             for replacement in replacements:
                 flat_char_map[replacement] = letter
 
-        # Remove str.maketrans and store flat_char_map for custom replacement
         self.char_map = flat_char_map
         self.reverse_word_map = {v: k for k, v in self.word_map.items()}
 
@@ -150,9 +149,8 @@ def edit_distance(s1, s2):
 def find_closest_word(word, word_list, max_distance=1):
     closest_word = None
     closest_distance = None
-    for candidate in word_list:
-        dist = edit_distance(word, candidate)
-        if closest_distance is None or dist < closest_distance:
+    for candidate in word_list:         dist = edit_distance(word, candidate)
+    if closest_distance is None or dist < closest_distance:
             closest_word = candidate
             closest_distance = dist
     if closest_distance is not None and closest_distance <= max_distance:

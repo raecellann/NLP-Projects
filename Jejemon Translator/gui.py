@@ -10,9 +10,9 @@ class JejemonGUI:
         self.root = root
         self.root.title("Jejemon Translator")
         self.translator = JejemonTranslator()
-        self.mode = None  
+        self.mode = None
         self.bg_color = "#f8f6f2"
-        self.root.geometry("800x500")  
+        self.root.geometry("800x500")
         self._build_main_menu()
 
     def _clear_window(self):
@@ -25,7 +25,6 @@ class JejemonGUI:
         self.output_var = tk.StringVar()
         self.input_var = tk.StringVar()
         self.bg_color = "#f8f6f2"
-
         style = ttk.Style()
         style.theme_use('clam')
         style.configure('TButton', font=('Arial', 12, 'bold'), padding=8, borderwidth=0, relief='flat', background='#f8f6f6', foreground='#222', focuscolor='')
@@ -35,26 +34,25 @@ class JejemonGUI:
             foreground=[('active', '#222'), ('pressed', '#222')]
         )
         style.configure('Hover.TButton', background='#b6e388', foreground='#222')
-
         try:
-            from PIL import Image, ImageTk
-            import os
             gif_path = os.path.join("multimedia", "RESUME POWERPOINT.gif")
             self.gif_img = Image.open(gif_path)
             self.gif_frames = []
             self.gif_sizes = []
+            frame_idx = 0
             try:
                 while True:
-                    frame = self.gif_img.copy().resize((800, 500))
-                    self.gif_frames.append(ImageTk.PhotoImage(frame))
-                    self.gif_sizes.append(frame.size)
-                    self.gif_img.seek(len(self.gif_frames))
+                    if frame_idx % 2 == 0:
+                        frame = self.gif_img.copy().resize((800, 500))
+                        self.gif_frames.append(ImageTk.PhotoImage(frame))
+                        self.gif_sizes.append(frame.size)
+                    frame_idx += 1
+                    self.gif_img.seek(frame_idx)
             except EOFError:
                 pass
         except Exception as e:
             self.gif_frames = []
-
-        self.bg_canvas = tk.Canvas(self.root, width=700, height=500, highlightthickness=0, bd=0)
+        self.bg_canvas = tk.Canvas(self.root, width=800, height=500, highlightthickness=0, bd=0)
         self.bg_canvas.place(x=0, y=0, relwidth=1, relheight=1)
         if self.gif_frames:
             self.bg_gif_id = self.bg_canvas.create_image(0, 0, anchor='nw', image=self.gif_frames[0])
@@ -64,8 +62,7 @@ class JejemonGUI:
                     self.root.after(80, animate_bg_gif, (idx+1)%len(self.gif_frames))
             animate_bg_gif()
         else:
-            self.bg_canvas.create_rectangle(0, 0, 700, 500, fill=self.bg_color, outline="")
-
+            self.bg_canvas.create_rectangle(0, 0, 800, 500, fill=self.bg_color, outline="")
         btn_frame = tk.Frame(self.root, bg='')
         btn_frame.pack(expand=True)
         style.configure('TButton', font=('Arial', 12, 'bold'), padding=8, borderwidth=0, relief='flat', background='#f8f6f6', foreground='#222', focuscolor='')
@@ -155,14 +152,13 @@ class JejemonGUI:
         self._clear_window()
         style = ttk.Style()
         style.theme_use('clam')
-        style.configure('TButton', font=('Arial', 12, 'bold'), padding=8, borderwidth=0, relief='flat', background='#e0e0e0', foreground='#222', focuscolor='#b6e388')
+        style.configure('TButton', font=('Arial', 12, 'bold'), padding=8, borderwidth=0, relief='flat', background='', foreground='#222', focuscolor='')
         style.map('TButton',
             background=[('active', '#b6e388'), ('pressed', '#a0c97c')],
             relief=[('pressed', 'sunken'), ('!pressed', 'flat')],
             foreground=[('active', '#222'), ('pressed', '#222')]
         )
         style.configure('Hover.TButton', background='#b6e388', foreground='#222')
-
         canvas_frame = tk.Frame(self.root, bg=self.bg_color, bd=0, highlightbackground="#b6e388", highlightthickness=2)
         canvas_frame.pack(pady=(10, 5), padx=10)
         self.output_canvas = tk.Canvas(
@@ -180,10 +176,8 @@ class JejemonGUI:
         tk.Button(color_frame, bg="#b6e388", width=2, command=lambda: self._change_bg_color("#b6e388"), relief='flat', bd=1, highlightbackground="#b6e388").pack(side=tk.LEFT, padx=2)
         tk.Button(color_frame, bg="#ffffff", width=2, command=lambda: self._change_bg_color("#ffffff"), relief='flat', bd=1, highlightbackground="#b6e388").pack(side=tk.LEFT, padx=2)
         tk.Button(color_frame, bg="#f8f6f2", width=2, command=lambda: self._change_bg_color("#f8f6f2"), relief='flat', bd=1, highlightbackground="#b6e388").pack(side=tk.LEFT, padx=2)
-
         self.input_entry = tk.Entry(self.root, textvariable=self.input_var, font=("Arial", 14), width=40, relief="solid", bd=2, highlightbackground="#b6e388", highlightthickness=2)
         self.input_entry.pack(pady=4)
-
         btn_frame = tk.Frame(self.root, bg=self.bg_color)
         btn_frame.pack(pady=4)
         self.btn_translate = ttk.Button(btn_frame, text="Translate", width=15, command=self._translate, style='TButton')
@@ -192,7 +186,6 @@ class JejemonGUI:
         self.btn_save.grid(row=0, column=1, padx=5)
         self.btn_back = ttk.Button(btn_frame, text="Back to Main Menu", width=20, command=self._build_main_menu, style='TButton')
         self.btn_back.grid(row=0, column=2, padx=5)
-        # Add hover effect for translation view buttons
         for btn in [self.btn_translate, self.btn_save, self.btn_back]:
             btn.bind("<Enter>", lambda e, b=btn: b.configure(style='Hover.TButton'))
             btn.bind("<Leave>", lambda e, b=btn: b.configure(style='TButton'))
@@ -240,11 +233,9 @@ class JejemonGUI:
         if self.mode == 'to_jejemon':
             normalized = self.translator.normalize(text)
             jejemonized = self.translator.jejemonize(normalized)
-
             self.output_var.set(jejemonized)
         elif self.mode == 'to_normal':
             normalized = self.translator.normalize(text)
-
             self.output_var.set(normalized)
         else:
             self.output_var.set("Invalid mode.")
@@ -254,7 +245,7 @@ class JejemonGUI:
     def _save_text(self):
         text = self.output_var.get()
         if not text.strip():
-            return  
+            return
         file_path = filedialog.asksaveasfilename(defaultextension=".png", filetypes=[("PNG Image", "*.png")])
         if file_path:
             try:
@@ -265,7 +256,7 @@ class JejemonGUI:
     def _save_text_as_image(self, text, file_path):
         from PIL import ImageFont
         import textwrap
-        img_width = 1000  
+        img_width = 1000
         img_height = 1000
         min_font_size = 6
         max_font_size = 200
@@ -275,7 +266,7 @@ class JejemonGUI:
         if bg.startswith('#'):
             bg_rgb = tuple(int(bg[i:i+2], 16) for i in (1, 3, 5))
         else:
-            bg_rgb = (248, 246, 242) 
+            bg_rgb = (248, 246, 242)
         img = Image.new('RGB', (img_width, img_height), bg_rgb)
         draw = ImageDraw.Draw(img)
         y = (img_height - total_text_height) // 2

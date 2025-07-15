@@ -2,7 +2,7 @@ import tkinter as tk
 from tkinter import messagebox, filedialog, simpledialog
 from tkinter import ttk
 from translator import JejemonTranslator
-from PIL import Image, ImageDraw, ImageFont
+from PIL import Image, ImageDraw, ImageFont, ImageTk
 import os
 
 class JejemonGUI:
@@ -16,6 +16,12 @@ class JejemonGUI:
         self._build_main_menu()
 
     def _clear_window(self):
+        # Stop GIF animation by removing any pending after callbacks
+        if hasattr(self, 'bg_canvas') and hasattr(self, 'bg_gif_id'):
+            try:
+                self.root.after_cancel(self._gif_after_id)
+            except Exception:
+                pass
         for widget in self.root.winfo_children():
             widget.destroy()
 
@@ -57,9 +63,9 @@ class JejemonGUI:
         if self.gif_frames:
             self.bg_gif_id = self.bg_canvas.create_image(0, 0, anchor='nw', image=self.gif_frames[0])
             def animate_bg_gif(idx=0):
-                if self.gif_frames:
+                if self.gif_frames and hasattr(self, 'bg_canvas') and self.bg_canvas.winfo_exists():
                     self.bg_canvas.itemconfig(self.bg_gif_id, image=self.gif_frames[idx])
-                    self.root.after(80, animate_bg_gif, (idx+1)%len(self.gif_frames))
+                    self._gif_after_id = self.root.after(80, animate_bg_gif, (idx+1)%len(self.gif_frames))
             animate_bg_gif()
         else:
             self.bg_canvas.create_rectangle(0, 0, 800, 500, fill=self.bg_color, outline="")
@@ -152,95 +158,101 @@ class JejemonGUI:
         self._clear_window()
         style = ttk.Style()
         style.theme_use('clam')
-        style.configure('TButton', font=('Arial', 12, 'bold'), padding=8, borderwidth=0, relief='flat', background='', foreground='#222', focuscolor='')
-        style.map('TButton',
-            background=[('active', '#b6e388'), ('pressed', '#a0c97c')],
-            relief=[('pressed', 'sunken'), ('!pressed', 'flat')],
+        # Custom button styles for visibility
+        style.configure('Green.TButton', font=('Arial', 12, 'bold'), padding=8, borderwidth=0, relief='flat', background='#b6e388', foreground='#222', focuscolor='')
+        style.map('Green.TButton',
+            background=[('active', '#a0c97c'), ('pressed', '#8fc46c')],
+            foreground=[('active', '#222'), ('pressed', '#222')]
+        )
+        style.configure('White.TButton', font=('Arial', 12, 'bold'), padding=8, borderwidth=0, relief='flat', background='#fff', foreground='#222', focuscolor='')
+        style.map('White.TButton',
+            background=[('active', '#e0e0e0'), ('pressed', '#cccccc')],
             foreground=[('active', '#222'), ('pressed', '#222')]
         )
         style.configure('Hover.TButton', background='#b6e388', foreground='#222')
-        canvas_frame = tk.Frame(self.root, bg=self.bg_color, bd=0, highlightbackground="#b6e388", highlightthickness=2)
-        canvas_frame.pack(pady=(10, 5), padx=10)
+        # Output Canvas (no border, with margin)
+        output_frame = tk.Frame(self.root, bg=self.bg_color, bd=0, highlightthickness=0)
+        output_frame.pack(pady=(10, 5), padx=60)  # Add left/right margin
         self.output_canvas = tk.Canvas(
-            canvas_frame,
-            width=500,
-            height=500,
+            output_frame,
+            width=350,
+            height=350,
             bg=self.bg_color,
             highlightthickness=0,
             relief="flat"
         )
         self.output_canvas.pack()
+        self._draw_output_canvas(self.output_var.get())
+        # Store reference for color change
+        self.output_frame = output_frame
         color_frame = tk.Frame(self.root, bg=self.bg_color)
         color_frame.pack(pady=(0, 4))
+        self.color_frame = color_frame
         tk.Label(color_frame, text="Background color:", bg=self.bg_color).pack(side=tk.LEFT)
-        tk.Button(color_frame, bg="#b6e388", width=2, command=lambda: self._change_bg_color("#b6e388"), relief='flat', bd=1, highlightbackground="#b6e388").pack(side=tk.LEFT, padx=2)
-        tk.Button(color_frame, bg="#ffffff", width=2, command=lambda: self._change_bg_color("#ffffff"), relief='flat', bd=1, highlightbackground="#b6e388").pack(side=tk.LEFT, padx=2)
-        tk.Button(color_frame, bg="#f8f6f2", width=2, command=lambda: self._change_bg_color("#f8f6f2"), relief='flat', bd=1, highlightbackground="#b6e388").pack(side=tk.LEFT, padx=2)
-        self.input_entry = tk.Entry(self.root, textvariable=self.input_var, font=("Arial", 14), width=40, relief="solid", bd=2, highlightbackground="#b6e388", highlightthickness=2)
+        tk.Button(color_frame, bg="#b6e388", width=2, command=lambda: self._change_bg_color("#b6e388"), relief='flat', bd=1).pack(side=tk.LEFT, padx=2)
+        tk.Button(color_frame, bg="#ffffff", width=2, command=lambda: self._change_bg_color("#ffffff"), relief='flat', bd=1).pack(side=tk.LEFT, padx=2)
+        tk.Button(color_frame, bg="#f8f6f2", width=2, command=lambda: self._change_bg_color("#f8f6f2"), relief='flat', bd=1).pack(side=tk.LEFT, padx=2)
+        self.input_entry = tk.Entry(self.root, textvariable=self.input_var, font=("Arial", 14), width=40, relief="solid", bd=2)
         self.input_entry.pack(pady=4)
         btn_frame = tk.Frame(self.root, bg=self.bg_color)
         btn_frame.pack(pady=4)
-        self.btn_translate = ttk.Button(btn_frame, text="Translate", width=15, command=self._translate, style='TButton')
+        self.btn_translate = ttk.Button(btn_frame, text="Translate", width=15, command=self._translate, style='Green.TButton')
         self.btn_translate.grid(row=0, column=0, padx=5)
-        self.btn_save = ttk.Button(btn_frame, text="Save", width=10, command=self._save_text, style='TButton')
+        self.btn_save = ttk.Button(btn_frame, text="Save", width=10, command=self._save_text, style='White.TButton')
         self.btn_save.grid(row=0, column=1, padx=5)
-        self.btn_back = ttk.Button(btn_frame, text="Back to Main Menu", width=20, command=self._build_main_menu, style='TButton')
+        self.btn_back = ttk.Button(btn_frame, text="Back to Main Menu", width=20, command=self._build_main_menu, style='White.TButton')
         self.btn_back.grid(row=0, column=2, padx=5)
         for btn in [self.btn_translate, self.btn_save, self.btn_back]:
             btn.bind("<Enter>", lambda e, b=btn: b.configure(style='Hover.TButton'))
-            btn.bind("<Leave>", lambda e, b=btn: b.configure(style='TButton'))
-        self._draw_output_canvas()
+            btn.bind("<Leave>", lambda e, b=btn: b.configure(style=btn.cget('style')))
 
-    def _draw_output_canvas(self):
+    def _draw_output_canvas(self, text):
         if hasattr(self, 'output_canvas'):
             self.output_canvas.delete("all")
-            text = self.output_var.get()
-            if not text.strip():
+            if not text:
                 return
-            font, wrapped_lines, font_size, line_height, preview_line_height, preview_total_text_height, max_text_width, margin = self._get_font_and_wrapped_lines(
-                text, max_img_size=500, min_font_size=6, max_font_size=120, canvas_height=500, line_height_multiplier=1.3)
-            try:
-                from tkinter import font as tkfont
-                font_name = "Arial"
-                tk_font = tkfont.Font(family=font_name, size=font_size)
-            except Exception:
-                tk_font = ("Arial", font_size)
-            y = (500 - preview_total_text_height) // 2
-            if y < margin:
-                y = margin
-            for line in wrapped_lines:
-                text_width = tk_font.measure(line) if hasattr(tk_font, 'measure') else 10 * len(line)
-                x = (500 - text_width) // 2
-                self.output_canvas.create_text(x, y, text=line, font=tk_font, fill="#000000", anchor="nw")
-                y += preview_line_height
+            # Center the text on the canvas
+            canvas_width = int(self.output_canvas['width'])
+            canvas_height = int(self.output_canvas['height'])
+            font = ("Arial", 18, "bold")
+            # Split text into lines if too long
+            import textwrap
+            lines = textwrap.wrap(text, width=60)
+            total_text_height = len(lines) * 30  # Approximate line height
+            y = (canvas_height - total_text_height) // 2 + 15
+            for line in lines:
+                self.output_canvas.create_text(
+                    canvas_width // 2, y, text=line, font=font, fill="#222", anchor="n"
+                )
+                y += 30
+
+    def _update_output_text(self, text):
+        self._draw_output_canvas(text)
+
+    def _clear_placeholder(self):
+        if self.input_text.get("1.0", "end-1c") == "Type or paste your text here...":
+            self.input_text.delete("1.0", "end")
 
     def _change_bg_color(self, color):
         self.bg_color = color
         if hasattr(self, 'output_canvas'):
             self.output_canvas.config(bg=color)
-            self._draw_output_canvas()
-        elif hasattr(self, 'output_label'):
-            self.output_label.config(bg=color)
-            pass
+        if hasattr(self, 'output_frame'):
+            self.output_frame.config(bg=color)
+        if hasattr(self, 'color_frame'):
+            self.color_frame.config(bg=color)
 
     def _translate(self):
-        text = self.input_var.get().strip()
-        if not text:
-            self.output_var.set("Please enter some text.")
-            if hasattr(self, 'output_canvas'):
-                self._draw_output_canvas()
+        input_text = self.input_var.get()
+        if not input_text.strip():
+            messagebox.showwarning("Input Required", "Please enter text to translate.")
             return
         if self.mode == 'to_jejemon':
-            normalized = self.translator.normalize(text)
-            jejemonized = self.translator.jejemonize(normalized)
-            self.output_var.set(jejemonized)
-        elif self.mode == 'to_normal':
-            normalized = self.translator.normalize(text)
-            self.output_var.set(normalized)
+            result = self.translator.jejemonize(input_text)
         else:
-            self.output_var.set("Invalid mode.")
-        if hasattr(self, 'output_canvas'):
-            self._draw_output_canvas()
+            result = self.translator.normalize(input_text)
+        self.output_var.set(result)
+        self._update_output_text(result)
 
     def _save_text(self):
         text = self.output_var.get()
@@ -254,33 +266,25 @@ class JejemonGUI:
                 print(f"Failed to save image: {e}")
 
     def _save_text_as_image(self, text, file_path):
-        from PIL import ImageFont
-        import textwrap
-        img_width = 1000
-        img_height = 1000
-        min_font_size = 6
-        max_font_size = 200
-        font, wrapped_lines, font_size, line_height, save_line_height, total_text_height, max_text_width, margin = self._get_font_and_wrapped_lines(
-            text, max_img_size=img_width, min_font_size=min_font_size, max_font_size=max_font_size, canvas_height=img_height, line_height_multiplier=1.0)
-        bg = self.bg_color
-        if bg.startswith('#'):
-            bg_rgb = tuple(int(bg[i:i+2], 16) for i in (1, 3, 5))
-        else:
-            bg_rgb = (248, 246, 242)
-        img = Image.new('RGB', (img_width, img_height), bg_rgb)
+        # Always save as 400x400 image, regardless of canvas size
+        from PIL import Image, ImageDraw, ImageFont
+        img_size = 400
+        img = Image.new('RGB', (img_size, img_size), color=self.bg_color)
         draw = ImageDraw.Draw(img)
-        y = (img_height - total_text_height) // 2
-        if y < margin:
-            y = margin
-        for line in wrapped_lines:
-            bbox = draw.textbbox((0, 0), line, font=font)
-            w = bbox[2] - bbox[0]
-            h = bbox[3] - bbox[1]
-            x = (img_width - w) // 2
-            if x < margin:
-                x = margin
-            draw.text((x, y), line, fill=(0, 0, 0), font=font)
-            y += save_line_height
+        font_size = 24
+        try:
+            font = ImageFont.truetype("arial.ttf", font_size)
+        except Exception:
+            font = ImageFont.load_default()
+        import textwrap
+        lines = textwrap.wrap(text, width=22)
+        total_text_height = len(lines) * (font_size + 8)
+        y = (img_size - total_text_height) // 2
+        for line in lines:
+            w, h = draw.textsize(line, font=font)
+            x = (img_size - w) // 2
+            draw.text((x, y), line, font=font, fill="#222")
+            y += font_size + 8
         img.save(file_path)
 
 if __name__ == "__main__":

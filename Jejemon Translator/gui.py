@@ -2,8 +2,7 @@ import tkinter as tk
 from tkinter import messagebox, filedialog, simpledialog
 from tkinter import ttk
 from translator import JejemonTranslator
-from PIL import Image, ImageDraw, ImageFont
-from PIL import ImageTk  # Ensure ImageTk is imported
+from PIL import Image, ImageDraw, ImageFont, ImageTk
 import os
 
 class JejemonGUI:
@@ -12,12 +11,11 @@ class JejemonGUI:
         self.root.title("Jejemon Translator")
         self.translator = JejemonTranslator()
         self.mode = None
-        self.bg_color = "#f8f6f2"
-        self.root.geometry("800x500")
+        self.bg_color = "#393E46"
+        self.root.geometry("500x700")
         self._build_main_menu()
 
     def _clear_window(self):
-        # Stop GIF animation by removing any pending after callbacks
         if hasattr(self, 'bg_canvas') and hasattr(self, 'bg_gif_id'):
             try:
                 self.root.after_cancel(self._gif_after_id)
@@ -32,6 +30,7 @@ class JejemonGUI:
         self.output_var = tk.StringVar()
         self.input_var = tk.StringVar()
         self.bg_color = "#f8f6f2"
+        self.root.geometry("1200x700")
         style = ttk.Style()
         style.theme_use('clam')
         style.configure('TButton', font=('Arial', 12, 'bold'), padding=8, borderwidth=0, relief='flat', background='#f8f6f6', foreground='#222', focuscolor='')
@@ -41,45 +40,48 @@ class JejemonGUI:
             foreground=[('active', '#222'), ('pressed', '#222')]
         )
         style.configure('Hover.TButton', background='#b6e388', foreground='#222')
+        # Set PNG background for main menu
+        from PIL import Image, ImageTk
+        bg_path = os.path.join("multimedia", "background.png")
+        target_w, target_h = 1200, 700
         try:
-            gif_path = os.path.join("multimedia", "RESUME POWERPOINT.gif")
-            self.gif_img = Image.open(gif_path)
-            self.gif_frames = []
-            self.gif_sizes = []
-            frame_idx = 0
-            try:
-                while True:
-                    if frame_idx % 2 == 0:
-                        frame = self.gif_img.copy().resize((800, 500))
-                        self.gif_frames.append(ImageTk.PhotoImage(frame))
-                        self.gif_sizes.append(frame.size)
-                    frame_idx += 1
-                    self.gif_img.seek(frame_idx)
-            except EOFError:
-                pass
+            bg_img = Image.open(bg_path)
+            orig_w, orig_h = bg_img.size
+            # 'Cover' strategy: scale so the image fills the window, cropping as needed
+            scale = max(target_w / orig_w, target_h / orig_h)
+            new_w = int(orig_w * scale)
+            new_h = int(orig_h * scale)
+            bg_img = bg_img.resize((new_w, new_h), Image.LANCZOS)
+            # Crop to window size, centered
+            left = (new_w - target_w) // 2
+            top = (new_h - target_h) // 2
+            right = left + target_w
+            bottom = top + target_h
+            bg_img = bg_img.crop((left, top, right, bottom))
+            self.bg_img_tk = ImageTk.PhotoImage(bg_img)
         except Exception as e:
-            self.gif_frames = []
-        self.bg_canvas = tk.Canvas(self.root, width=800, height=500, highlightthickness=0, bd=0)
-        self.bg_canvas.place(x=0, y=0, relwidth=1, relheight=1)
-        if self.gif_frames:
-            self.bg_gif_id = self.bg_canvas.create_image(0, 0, anchor='nw', image=self.gif_frames[0])
-            def animate_bg_gif(idx=0):
-                if self.gif_frames and hasattr(self, 'bg_canvas') and self.bg_canvas.winfo_exists():
-                    self.bg_canvas.itemconfig(self.bg_gif_id, image=self.gif_frames[idx])
-                    self._gif_after_id = self.root.after(80, animate_bg_gif, (idx+1)%len(self.gif_frames))
-            animate_bg_gif()
+            self.bg_img_tk = None
+        self.bg_canvas = tk.Canvas(self.root, width=1200, height=700, highlightthickness=0, bd=0)
+        self.bg_canvas.place(x=0, y=0)
+        if self.bg_img_tk:
+            self.bg_canvas.create_image(0, 0, anchor='nw', image=self.bg_img_tk)
         else:
-            self.bg_canvas.create_rectangle(0, 0, 800, 500, fill=self.bg_color, outline="")
+            self.bg_canvas.create_rectangle(0, 0, 1200, 700, fill=self.bg_color, outline="")
         btn_frame = tk.Frame(self.root, bg='')
         btn_frame.pack(expand=True)
+
         style.configure('TButton', font=('Arial', 12, 'bold'), padding=8, borderwidth=0, relief='flat', background='#f8f6f6', foreground='#222', focuscolor='')
         style.configure('Hover.TButton', background='#b6e388', foreground='#222')
-        self.btn_to_jejemon = ttk.Button(btn_frame, text="Normalize to Jejemon", width=18, command=self._set_to_jejemon, style='TButton')
+
+        self.btn_to_jejemon = ttk.Button(btn_frame, text="Normalize to Jejemon", width=22, command=self._set_to_jejemon, style='TButton')
         self.btn_to_jejemon.grid(row=0, column=0, padx=4)
-        self.btn_to_normal = ttk.Button(btn_frame, text="Jejemon to Normalize", width=18, command=self._set_to_normal, style='TButton')
+
+        self.btn_to_normal = ttk.Button(btn_frame, text="Jejemon to Normalize", width=22, command=self._set_to_normal, style='TButton')
         self.btn_to_normal.grid(row=0, column=1, padx=4)
-        self.btn_exit = ttk.Button(btn_frame, text="Exit Program", width=12, command=self.root.quit, style='TButton')
+
+        self.btn_exit = ttk.Button(btn_frame, text="Exit Program", width=16, command=self.root.quit, style='TButton')
         self.btn_exit.grid(row=0, column=2, padx=4)
+
         for btn in [self.btn_to_jejemon, self.btn_to_normal, self.btn_exit]:
             btn.bind("<Enter>", lambda e, b=btn: b.configure(style='Hover.TButton'))
             btn.bind("<Leave>", lambda e, b=btn: b.configure(style='TButton'))
@@ -157,6 +159,9 @@ class JejemonGUI:
 
     def _build_translate_view(self):
         self._clear_window()
+        self.bg_color = "#393E46"
+        self.root.geometry("1366x768")
+        self.root.configure(bg="#393E46")
         style = ttk.Style()
         style.theme_use('clam')
         # Custom button styles for visibility
@@ -170,62 +175,89 @@ class JejemonGUI:
             background=[('active', '#e0e0e0'), ('pressed', '#cccccc')],
             foreground=[('active', '#222'), ('pressed', '#222')]
         )
-        style.configure('Hover.TButton', background='#b6e388', foreground='#222')
-        # Output Canvas (no border, with margin)
-        output_frame = tk.Frame(self.root, bg=self.bg_color, bd=0, highlightthickness=0)
-        output_frame.pack(pady=(10, 5), padx=60)  # Add left/right margin
+        # Main container frame for vertical layout
+        main_frame = tk.Frame(self.root, bg=self.bg_color)
+        main_frame.pack(fill=tk.BOTH, expand=True)
+        # Output Canvas (large, but not full height)
+        output_frame = tk.Frame(main_frame, bg=self.bg_color, bd=0, highlightthickness=0)
+        output_frame.pack(pady=(20, 5), padx=100, fill=tk.X)
         self.output_canvas = tk.Canvas(
             output_frame,
-            width=350,
-            height=350,
-            bg=self.bg_color,
+            width=1000,
+            height=420,
+            bg="#F2F2F2",
             highlightthickness=0,
             relief="flat"
         )
         self.output_canvas.pack()
         self._draw_output_canvas(self.output_var.get())
-        # Store reference for color change
         self.output_frame = output_frame
-        color_frame = tk.Frame(self.root, bg=self.bg_color)
-        color_frame.pack(pady=(0, 4))
-        self.color_frame = color_frame
-        tk.Label(color_frame, text="Background color:", bg=self.bg_color).pack(side=tk.LEFT)
-        tk.Button(color_frame, bg="#b6e388", width=2, command=lambda: self._change_bg_color("#b6e388"), relief='flat', bd=1).pack(side=tk.LEFT, padx=2)
-        tk.Button(color_frame, bg="#ffffff", width=2, command=lambda: self._change_bg_color("#ffffff"), relief='flat', bd=1).pack(side=tk.LEFT, padx=2)
-        tk.Button(color_frame, bg="#f8f6f2", width=2, command=lambda: self._change_bg_color("#f8f6f2"), relief='flat', bd=1).pack(side=tk.LEFT, padx=2)
-        self.input_entry = tk.Entry(self.root, textvariable=self.input_var, font=("Arial", 14), width=40, relief="solid", bd=2)
-        self.input_entry.pack(pady=4)
-        btn_frame = tk.Frame(self.root, bg=self.bg_color)
-        btn_frame.pack(pady=4)
-        self.btn_translate = ttk.Button(btn_frame, text="Translate", width=15, command=self._translate, style='Green.TButton')
-        self.btn_translate.grid(row=0, column=0, padx=5)
-        self.btn_save = ttk.Button(btn_frame, text="Save", width=10, command=self._save_text, style='White.TButton')
-        self.btn_save.grid(row=0, column=1, padx=5)
-        self.btn_back = ttk.Button(btn_frame, text="Back to Main Menu", width=20, command=self._build_main_menu, style='White.TButton')
-        self.btn_back.grid(row=0, column=2, padx=5)
-        for btn in [self.btn_translate, self.btn_save, self.btn_back]:
-            btn.bind("<Enter>", lambda e, b=btn: b.configure(style='Hover.TButton'))
-            btn.bind("<Leave>", lambda e, b=btn: b.configure(style=btn.cget('style')))
+        # Color selector with fixed label background
+        color_selector_frame = tk.Frame(main_frame, bg=self.bg_color)
+        color_selector_frame.pack(pady=(0, 8))
+        # Fixed label background frame
+        label_bg_frame = tk.Frame(color_selector_frame, bg="#393E46")
+        label_bg_frame.pack(side=tk.LEFT)
+        tk.Label(label_bg_frame, text="Background color:", bg="#393E46", fg="#fff").pack()
+        # Color buttons
+        for color in ["#b6e388", "#ffffff", "#f8f6f2"]:
+            border = tk.Frame(color_selector_frame, bg="black", padx=1, pady=1)
+            border.pack(side=tk.LEFT, padx=2)
+            tk.Button(border, bg=color, width=2, height=1, command=lambda c=color: self._change_bg_color(c), relief='flat', bd=0).pack()
+        self.color_frame = color_selector_frame
+        # Input entry
+        self.input_entry = tk.Entry(main_frame, textvariable=self.input_var, font=("Arial", 14), width=80, relief="solid", bd=2)
+        self.input_entry.pack(pady=8)
+        # Buttons
+        btn_frame = tk.Frame(main_frame, bg=self.bg_color)
+        btn_frame.pack(pady=10)
+        self.btn_translate = ttk.Button(btn_frame, text="Translate", width=18, command=self._translate, style='Green.TButton')
+        self.btn_translate.grid(row=0, column=0, padx=10)
+        self.btn_save = ttk.Button(btn_frame, text="Save", width=12, command=self._save_text, style='White.TButton')
+        self.btn_save.grid(row=0, column=1, padx=10)
+        self.btn_back = ttk.Button(btn_frame, text="Back to Main Menu", width=22, command=self._build_main_menu, style='White.TButton')
+        self.btn_back.grid(row=0, column=2, padx=10)
+        # Removed hover effects
 
     def _draw_output_canvas(self, text):
         if hasattr(self, 'output_canvas'):
             self.output_canvas.delete("all")
             if not text:
                 return
-            # Center the text on the canvas
+            import textwrap
+            import tkinter.font as tkFont
             canvas_width = int(self.output_canvas['width'])
             canvas_height = int(self.output_canvas['height'])
-            font = ("Arial", 18, "bold")
-            # Split text into lines if too long
-            import textwrap
-            lines = textwrap.wrap(text, width=60)
-            total_text_height = len(lines) * 30  # Approximate line height
-            y = (canvas_height - total_text_height) // 2 + 15
+            margin = 30  # Left and right margin in pixels
+            min_font_size = 8
+            max_font_size = 32
+            font_family = "Arial"
+            # Try from big to small font size until it fits
+            for font_size in range(max_font_size, min_font_size - 1, -1):
+                font = tkFont.Font(family=font_family, size=font_size, weight="bold")
+                usable_width = canvas_width - 2 * margin
+                # Estimate max chars per line for wrapping
+                avg_char_width = font.measure('A') if font.measure('A') > 0 else font_size * 0.6
+                max_chars_per_line = max(1, int(usable_width // avg_char_width))
+                lines = []
+                for paragraph in text.split('\n'):
+                    lines.extend(textwrap.wrap(paragraph, width=max_chars_per_line))
+                    if paragraph != text.split('\n')[-1]:
+                        lines.append("")  # Add blank line for paragraph breaks
+                # Check if all lines fit in width
+                fits_width = all(font.measure(line) <= usable_width for line in lines)
+                line_height = font.metrics("linespace") + 4
+                total_text_height = len(lines) * line_height
+                fits_height = total_text_height <= (canvas_height - 2 * 10)  # 10px top/bottom margin
+                if fits_width and fits_height:
+                    break
+            # Center vertically
+            y = (canvas_height - total_text_height) // 2
             for line in lines:
                 self.output_canvas.create_text(
-                    canvas_width // 2, y, text=line, font=font, fill="#222", anchor="n"
+                    canvas_width // 2, y, text=line, font=(font_family, font_size, "bold"), fill="#222", anchor="n"
                 )
-                y += 30
+                y += line_height
 
     def _update_output_text(self, text):
         self._draw_output_canvas(text)

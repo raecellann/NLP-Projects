@@ -33,26 +33,18 @@ class JejemonGUI:
         self.root.geometry("1200x700")
         style = ttk.Style()
         style.theme_use('clam')
-        style.configure('TButton', font=('Arial', 12, 'bold'), padding=8, borderwidth=0, relief='flat', background='#f8f6f6', foreground='#222', focuscolor='')
-        style.map('TButton',
-            background=[('active', '#b6e388'), ('pressed', '#a0c97c')],
-            relief=[('pressed', 'sunken'), ('!pressed', 'flat')],
-            foreground=[('active', '#222'), ('pressed', '#222')]
-        )
+        style.configure('TButton', font=('Arial', 12, 'bold'), padding=8, borderwidth=2, relief='flat', background='#393E46', foreground='#fff', focuscolor='', bordercolor='#38b6ff')
+        style.map('TButton', background=[], relief=[], foreground=[], bordercolor=[])
         style.configure('Hover.TButton', background='#b6e388', foreground='#222')
-        # Set PNG background for main menu
-        from PIL import Image, ImageTk
-        bg_path = os.path.join("multimedia", "background.png")
+        bg_path = os.path.join("multimedia", "Background1.png")
         target_w, target_h = 1200, 700
         try:
             bg_img = Image.open(bg_path)
             orig_w, orig_h = bg_img.size
-            # 'Cover' strategy: scale so the image fills the window, cropping as needed
             scale = max(target_w / orig_w, target_h / orig_h)
             new_w = int(orig_w * scale)
             new_h = int(orig_h * scale)
             bg_img = bg_img.resize((new_w, new_h), Image.LANCZOS)
-            # Crop to window size, centered
             left = (new_w - target_w) // 2
             top = (new_h - target_h) // 2
             right = left + target_w
@@ -67,24 +59,33 @@ class JejemonGUI:
             self.bg_canvas.create_image(0, 0, anchor='nw', image=self.bg_img_tk)
         else:
             self.bg_canvas.create_rectangle(0, 0, 1200, 700, fill=self.bg_color, outline="")
-        btn_frame = tk.Frame(self.root, bg='')
+        btn_frame = tk.Frame(self.root, bg='#393E46')
         btn_frame.pack(expand=True)
 
-        style.configure('TButton', font=('Arial', 12, 'bold'), padding=8, borderwidth=0, relief='flat', background='#f8f6f6', foreground='#222', focuscolor='')
+        style.configure('TButton', font=('Arial', 12, 'bold'), padding=8, borderwidth=2, relief='flat', background='#393E46', foreground='#fff', focuscolor='', bordercolor='#38b6ff')
+        style.map('TButton', background=[], relief=[], foreground=[], bordercolor=[])
         style.configure('Hover.TButton', background='#b6e388', foreground='#222')
 
-        self.btn_to_jejemon = ttk.Button(btn_frame, text="Normalize to Jejemon", width=22, command=self._set_to_jejemon, style='TButton')
-        self.btn_to_jejemon.grid(row=0, column=0, padx=4)
+        style.configure('TButton', font=('Arial', 12, 'bold'), padding=8, borderwidth=0, relief='flat', background='#0f0f0f', foreground='#fff', focuscolor='')
+        style.map('TButton', background=[], relief=[], foreground=[])
 
-        self.btn_to_normal = ttk.Button(btn_frame, text="Jejemon to Normalize", width=22, command=self._set_to_normal, style='TButton')
-        self.btn_to_normal.grid(row=0, column=1, padx=4)
+        def bordered_button(parent, **kwargs):
+            border = tk.Frame(parent, bg='#38b6ff', padx=2, pady=2)
+            btn = ttk.Button(border, style='TButton', **kwargs)
+            btn.pack()
+            return border, btn
 
-        self.btn_exit = ttk.Button(btn_frame, text="Exit Program", width=16, command=self.root.quit, style='TButton')
-        self.btn_exit.grid(row=0, column=2, padx=4)
+        self.btn_to_jejemon_frame, self.btn_to_jejemon = bordered_button(btn_frame, text="Normalize to Jejemon", width=22, command=self._set_to_jejemon)
+        self.btn_to_jejemon_frame.grid(row=0, column=0, padx=4)
+
+        self.btn_to_normal_frame, self.btn_to_normal = bordered_button(btn_frame, text="Jejemon to Normalize", width=22, command=self._set_to_normal)
+        self.btn_to_normal_frame.grid(row=0, column=1, padx=4)
+
+        self.btn_exit_frame, self.btn_exit = bordered_button(btn_frame, text="Exit Program", width=16, command=self.root.quit)
+        self.btn_exit_frame.grid(row=0, column=2, padx=4)
 
         for btn in [self.btn_to_jejemon, self.btn_to_normal, self.btn_exit]:
-            btn.bind("<Enter>", lambda e, b=btn: b.configure(style='Hover.TButton'))
-            btn.bind("<Leave>", lambda e, b=btn: b.configure(style='TButton'))
+            pass
 
     def _set_to_jejemon(self):
         self.mode = 'to_jejemon'
@@ -164,7 +165,6 @@ class JejemonGUI:
         self.root.configure(bg="#393E46")
         style = ttk.Style()
         style.theme_use('clam')
-        # Custom button styles for visibility
         style.configure('Green.TButton', font=('Arial', 12, 'bold'), padding=8, borderwidth=0, relief='flat', background='#b6e388', foreground='#222', focuscolor='')
         style.map('Green.TButton',
             background=[('active', '#a0c97c'), ('pressed', '#8fc46c')],
@@ -175,16 +175,14 @@ class JejemonGUI:
             background=[('active', '#e0e0e0'), ('pressed', '#cccccc')],
             foreground=[('active', '#222'), ('pressed', '#222')]
         )
-        # Main container frame for vertical layout
         main_frame = tk.Frame(self.root, bg=self.bg_color)
         main_frame.pack(fill=tk.BOTH, expand=True)
-        # Output Canvas (large, but not full height)
         output_frame = tk.Frame(main_frame, bg=self.bg_color, bd=0, highlightthickness=0)
         output_frame.pack(pady=(20, 5), padx=100, fill=tk.X)
         self.output_canvas = tk.Canvas(
             output_frame,
             width=1000,
-            height=420,
+            height=470,
             bg="#F2F2F2",
             highlightthickness=0,
             relief="flat"
@@ -192,23 +190,18 @@ class JejemonGUI:
         self.output_canvas.pack()
         self._draw_output_canvas(self.output_var.get())
         self.output_frame = output_frame
-        # Color selector with fixed label background
         color_selector_frame = tk.Frame(main_frame, bg=self.bg_color)
         color_selector_frame.pack(pady=(0, 8))
-        # Fixed label background frame
         label_bg_frame = tk.Frame(color_selector_frame, bg="#393E46")
         label_bg_frame.pack(side=tk.LEFT)
         tk.Label(label_bg_frame, text="Background color:", bg="#393E46", fg="#fff").pack()
-        # Color buttons
         for color in ["#b6e388", "#ffffff", "#f8f6f2"]:
             border = tk.Frame(color_selector_frame, bg="black", padx=1, pady=1)
             border.pack(side=tk.LEFT, padx=2)
             tk.Button(border, bg=color, width=2, height=1, command=lambda c=color: self._change_bg_color(c), relief='flat', bd=0).pack()
         self.color_frame = color_selector_frame
-        # Input entry
         self.input_entry = tk.Entry(main_frame, textvariable=self.input_var, font=("Arial", 14), width=80, relief="solid", bd=2)
         self.input_entry.pack(pady=8)
-        # Buttons
         btn_frame = tk.Frame(main_frame, bg=self.bg_color)
         btn_frame.pack(pady=10)
         self.btn_translate = ttk.Button(btn_frame, text="Translate", width=18, command=self._translate, style='Green.TButton')
@@ -217,7 +210,6 @@ class JejemonGUI:
         self.btn_save.grid(row=0, column=1, padx=10)
         self.btn_back = ttk.Button(btn_frame, text="Back to Main Menu", width=22, command=self._build_main_menu, style='White.TButton')
         self.btn_back.grid(row=0, column=2, padx=10)
-        # Removed hover effects
 
     def _draw_output_canvas(self, text):
         if hasattr(self, 'output_canvas'):
@@ -228,30 +220,26 @@ class JejemonGUI:
             import tkinter.font as tkFont
             canvas_width = int(self.output_canvas['width'])
             canvas_height = int(self.output_canvas['height'])
-            margin = 30  # Left and right margin in pixels
+            margin = 30
             min_font_size = 8
             max_font_size = 32
             font_family = "Arial"
-            # Try from big to small font size until it fits
             for font_size in range(max_font_size, min_font_size - 1, -1):
                 font = tkFont.Font(family=font_family, size=font_size, weight="bold")
                 usable_width = canvas_width - 2 * margin
-                # Estimate max chars per line for wrapping
                 avg_char_width = font.measure('A') if font.measure('A') > 0 else font_size * 0.6
                 max_chars_per_line = max(1, int(usable_width // avg_char_width))
                 lines = []
                 for paragraph in text.split('\n'):
                     lines.extend(textwrap.wrap(paragraph, width=max_chars_per_line))
                     if paragraph != text.split('\n')[-1]:
-                        lines.append("")  # Add blank line for paragraph breaks
-                # Check if all lines fit in width
+                        lines.append("")
                 fits_width = all(font.measure(line) <= usable_width for line in lines)
                 line_height = font.metrics("linespace") + 4
                 total_text_height = len(lines) * line_height
-                fits_height = total_text_height <= (canvas_height - 2 * 10)  # 10px top/bottom margin
+                fits_height = total_text_height <= (canvas_height - 2 * 10)
                 if fits_width and fits_height:
                     break
-            # Center vertically
             y = (canvas_height - total_text_height) // 2
             for line in lines:
                 self.output_canvas.create_text(
@@ -299,25 +287,53 @@ class JejemonGUI:
                 print(f"Failed to save image: {e}")
 
     def _save_text_as_image(self, text, file_path):
-        # Always save as 400x400 image, regardless of canvas size
         from PIL import Image, ImageDraw, ImageFont
-        img_size = 400
-        img = Image.new('RGB', (img_size, img_size), color=self.bg_color)
-        draw = ImageDraw.Draw(img)
-        font_size = 24
-        try:
-            font = ImageFont.truetype("arial.ttf", font_size)
-        except Exception:
-            font = ImageFont.load_default()
         import textwrap
-        lines = textwrap.wrap(text, width=22)
-        total_text_height = len(lines) * (font_size + 8)
-        y = (img_size - total_text_height) // 2
-        for line in lines:
-            w, h = draw.textsize(line, font=font)
-            x = (img_size - w) // 2
+        img_width = 1080
+        img_height = 1080
+        bg_color = self.output_canvas['bg'] if 'bg' in self.output_canvas.keys() else self.bg_color
+        margin = 40
+        min_font_size = 10
+        max_font_size = 180
+        font_family = "arial.ttf"
+        for font_size in range(max_font_size, min_font_size - 1, -2):
+            try:
+                font = ImageFont.truetype(font_family, font_size)
+            except Exception:
+                font = ImageFont.load_default()
+            usable_width = img_width - 2 * margin
+            avg_char_width = font.getbbox('A')[2] - font.getbbox('A')[0]
+            if avg_char_width == 0:
+                avg_char_width = font_size * 0.6
+            max_chars_per_line = max(1, int(usable_width // avg_char_width))
+            lines = []
+            for paragraph in text.split('\n'):
+                lines.extend(textwrap.wrap(paragraph, width=max_chars_per_line))
+                if paragraph != text.split('\n')[-1]:
+                    lines.append("")
+            line_widths = []
+            line_height = int((font.getbbox('A')[3] - font.getbbox('A')[1] + 4) * 1.35)
+            total_text_height = len(lines) * line_height
+            fits_height = total_text_height <= (img_height - 2 * margin)
+            fits_width = True
+            for line in lines:
+                bbox = font.getbbox(line)
+                w = bbox[2] - bbox[0]
+                line_widths.append(w)
+                if w > usable_width:
+                    fits_width = False
+                    break
+            if fits_height and fits_width:
+                break
+        img = Image.new('RGB', (img_width, img_height), color=bg_color)
+        draw = ImageDraw.Draw(img)
+        y = (img_height - total_text_height) // 2
+        for i, line in enumerate(lines):
+            bbox = draw.textbbox((0, 0), line, font=font)
+            w = bbox[2] - bbox[0]
+            x = (img_width - w) // 2
             draw.text((x, y), line, font=font, fill="#222")
-            y += font_size + 8
+            y += line_height
         img.save(file_path)
 
 if __name__ == "__main__":

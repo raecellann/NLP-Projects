@@ -41,34 +41,35 @@ class JejemonNormalizer:
 
     def normalize_token(self, token):
         if token.strip() == "":
-            return token 
+            return token
 
         lowered = token.lower()
 
+        # Short words fallback to char map
         if len(lowered) <= 2 and lowered not in self.word_map:
             replaced = self._multi_replace(lowered, self.char_map)
             return self.preserve_casing(token, replaced)
 
-        # Direct match
+        # 1. Direct match
         if lowered in self.word_map:
             normalized = self.word_map[lowered]
             return self.preserve_casing(token, normalized)
 
-        # Vowel-insensitive match
+        # 2. Vowel-insensitive match
         token_no_vowels = self.remove_vowels(lowered)
         for jej_word, tag_word in self.word_map.items():
             if self.remove_vowels(jej_word) == token_no_vowels:
                 return self.preserve_casing(token, tag_word)
 
-        # Fallback: autocorrect using edit distance
+        # 3. Edit-distance fallback
         corrected, dist = find_closest_word(lowered, self.word_map.keys(), max_distance=1)
         if corrected:
-            normalized = self.word_map[corrected]
-            return self.preserve_casing(token, normalized)
+            print(f"[Auto-correct] '{lowered}' → '{corrected}'")
+            return self.preserve_casing(token, self.word_map[corrected])
 
-        # Fallback: char map
-        normalized = self._multi_replace(lowered, self.char_map)
-        return self.preserve_casing(token, normalized)
+        # 4. Final fallback to char map
+        replaced = self._multi_replace(lowered, self.char_map)
+        return self.preserve_casing(token, replaced)
 
     def _multi_replace(self, text, replace_map):
         for key in sorted(replace_map, key=len, reverse=True):
@@ -83,14 +84,12 @@ class JejemonNormalizer:
 
     def jejemonize_token(self, token, seed=None):
         if token.strip() == "":
-            return token  # Return spaces or punctuation as-is
+            return token
 
         if seed is not None:
             random.seed(seed)
 
         lowered = token.lower()
-
-        # Direct match in reverse_word_map
         if lowered in self.reverse_word_map:
             jej = self.reverse_word_map[lowered]
             return self.preserve_casing(token, jej)
@@ -144,4 +143,5 @@ def find_closest_word(word, word_list, max_distance=1):
             closest_distance = dist
     if closest_distance is not None and closest_distance <= max_distance:
         return closest_word, closest_distance
+
     return None, None

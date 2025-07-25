@@ -160,9 +160,9 @@ class JejemonGUI:
 
     def _build_translate_view(self):
         self._clear_window()
-        self.bg_color = "#393E46"
+        self.bg_color = "#0f0f0f"
         self.root.geometry("1366x768")
-        self.root.configure(bg="#393E46")
+        self.root.configure(bg="#0f0f0f")
         style = ttk.Style()
         style.theme_use('clam')
         style.configure('Green.TButton', font=('Arial', 12, 'bold'), padding=8, borderwidth=0, relief='flat', background='#b6e388', foreground='#222', focuscolor='')
@@ -204,12 +204,26 @@ class JejemonGUI:
         self.input_entry.pack(pady=8)
         btn_frame = tk.Frame(main_frame, bg=self.bg_color)
         btn_frame.pack(pady=10)
-        self.btn_translate = ttk.Button(btn_frame, text="Translate", width=18, command=self._translate, style='Green.TButton')
-        self.btn_translate.grid(row=0, column=0, padx=10)
-        self.btn_save = ttk.Button(btn_frame, text="Save", width=12, command=self._save_text, style='White.TButton')
-        self.btn_save.grid(row=0, column=1, padx=10)
-        self.btn_back = ttk.Button(btn_frame, text="Back to Main Menu", width=22, command=self._build_main_menu, style='White.TButton')
-        self.btn_back.grid(row=0, column=2, padx=10)
+        # Button frame for translate view
+        def bordered_button(parent, **kwargs):
+            border = tk.Frame(parent, bg='#38b6ff', padx=2, pady=2)
+            btn = ttk.Button(border, style='TButton', **kwargs)
+            btn.pack()
+            return border, btn
+
+        # Update TButton style for translate view buttons
+        style.configure('TButton', font=('Arial', 12, 'bold'), padding=8, borderwidth=0, relief='flat', background='#0f0f0f', foreground='#fff', focuscolor='')
+        style.map('TButton', background=[], relief=[], foreground=[])
+
+        # Replace translate, save, and back buttons with bordered buttons
+        self.btn_translate_frame, self.btn_translate = bordered_button(btn_frame, text="Translate", width=18, command=self._translate)
+        self.btn_translate_frame.grid(row=0, column=0, padx=10)
+
+        self.btn_save_frame, self.btn_save = bordered_button(btn_frame, text="Save", width=12, command=self._save_text)
+        self.btn_save_frame.grid(row=0, column=1, padx=10)
+
+        self.btn_back_frame, self.btn_back = bordered_button(btn_frame, text="Back to Main Menu", width=22, command=self._build_main_menu)
+        self.btn_back_frame.grid(row=0, column=2, padx=10)
 
     def _draw_output_canvas(self, text):
         if hasattr(self, 'output_canvas'):

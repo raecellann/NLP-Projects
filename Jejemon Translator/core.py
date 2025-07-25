@@ -18,6 +18,7 @@ class JejemonNormalizer:
             data = json.load(f)
 
         self.word_map = data["word_map"]
+        self.reverse_word_map = data.get("reverse_word_map", {})
 
         self.char_map = {
             replacement: letter
@@ -35,6 +36,9 @@ class JejemonNormalizer:
             return converted.capitalize()
         return converted
 
+    def remove_vowels(self, word):
+        return ''.join([c for c in word if c.lower() not in 'aeiou'])
+
     def normalize_token(self, token):
         if token.strip() == "":
             return token 
@@ -45,16 +49,25 @@ class JejemonNormalizer:
             replaced = self._multi_replace(lowered, self.char_map)
             return self.preserve_casing(token, replaced)
 
+        # Direct match
         if lowered in self.word_map:
             normalized = self.word_map[lowered]
-        else:
-            corrected, dist = find_closest_word(lowered, self.word_map.keys(), max_distance=1)
-            if corrected:
-                print(f"[Auto-correct] '{lowered}' → '{corrected}'")
-                normalized = self.word_map[corrected]
-            else:
-                normalized = self._multi_replace(lowered, self.char_map)
+            return self.preserve_casing(token, normalized)
 
+        # Vowel-insensitive match
+        token_no_vowels = self.remove_vowels(lowered)
+        for jej_word, tag_word in self.word_map.items():
+            if self.remove_vowels(jej_word) == token_no_vowels:
+                return self.preserve_casing(token, tag_word)
+
+        # Fallback: autocorrect using edit distance
+        corrected, dist = find_closest_word(lowered, self.word_map.keys(), max_distance=1)
+        if corrected:
+            normalized = self.word_map[corrected]
+            return self.preserve_casing(token, normalized)
+
+        # Fallback: char map
+        normalized = self._multi_replace(lowered, self.char_map)
         return self.preserve_casing(token, normalized)
 
     def _multi_replace(self, text, replace_map):
@@ -77,15 +90,24 @@ class JejemonNormalizer:
 
         lowered = token.lower()
 
+        # Direct match in reverse_word_map
         if lowered in self.reverse_word_map:
             jej = self.reverse_word_map[lowered]
-        else:
-            jej = ""
-            for c in lowered:
-                if c in self.original_char_map:
-                    jej += random.choice(self.original_char_map[c])
-                else:
-                    jej += c
+            return self.preserve_casing(token, jej)
+
+        # Vowel-insensitive match in reverse_word_map
+        token_no_vowels = self.remove_vowels(lowered)
+        for tag_word, jej_word in self.reverse_word_map.items():
+            if self.remove_vowels(tag_word) == token_no_vowels:
+                return self.preserve_casing(token, jej_word)
+
+        # Fallback: char map transformation
+        jej = ""
+        for c in lowered:
+            if c in self.original_char_map:
+                jej += random.choice(self.original_char_map[c])
+            else:
+                jej += c
 
         return self.preserve_casing(token, jej)
 
@@ -95,14 +117,12 @@ class JejemonNormalizer:
         tokens = tokenizer.tokenize(text)
         return "".join([self.jejemonize_token(tok, seed=seed) for tok in tokens])
 
-
+# --- Autocorrect logic ---
 def edit_distance(s1, s2):
     if len(s1) < len(s2):
         return edit_distance(s2, s1)
-
     if len(s2) == 0:
         return len(s1)
-
     previous_row = list(range(len(s2) + 1))
     for i, c1 in enumerate(s1):
         current_row = [i + 1]
@@ -112,21 +132,16 @@ def edit_distance(s1, s2):
             substitute = previous_row[j] + (c1 != c2)
             current_row.append(min(insert, delete, substitute))
         previous_row = current_row
-
     return previous_row[-1]
-
 
 def find_closest_word(word, word_list, max_distance=1):
     closest_word = None
     closest_distance = None
-
     for candidate in word_list:
         dist = edit_distance(word, candidate)
         if closest_distance is None or dist < closest_distance:
             closest_word = candidate
             closest_distance = dist
-
     if closest_distance is not None and closest_distance <= max_distance:
         return closest_word, closest_distance
-
     return None, None

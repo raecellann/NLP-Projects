@@ -175,7 +175,9 @@
     "kill": "Kill",
     "em": "em",
     "jejemom": "jeJEMon",
-    "gotta kill em all": "GotTa Kill em ol"
+    "gotta kill em all": "GotTa Kill em ol",
+    "wud": "would",
+    "u":"you"
   },
   "char_map": {
     "a": ["4", "@", "A", "ah"],

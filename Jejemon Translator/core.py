@@ -15,7 +15,9 @@ class JejemonNormalizer:
         data_path = os.path.join(os.path.dirname(__file__), 'data.json')
         with open(data_path, 'r', encoding='utf-8') as f:
             data = json.load(f)
+
         self.word_map = data["word_map"]
+        self.reverse_word_map = {v: k for k, v in self.word_map.items()}
         self.char_map = {
             replacement: letter
             for letter, replacements in data["char_map"].items()
@@ -35,22 +37,28 @@ class JejemonNormalizer:
 
     def normalize_token(self, token):
         if token.strip() == "":
-            return token 
+            return token
+
         lowered = token.lower()
+
         if len(lowered) <= 2 and lowered not in self.word_map:
             replaced = self._multi_replace(lowered, self.char_map)
             return self.preserve_casing(token, replaced)
+
         if lowered in self.word_map:
             normalized = self.word_map[lowered]
             return self.preserve_casing(token, normalized)
+
         token_no_vowels = self.remove_vowels(lowered)
         for jej_word, tag_word in self.word_map.items():
             if self.remove_vowels(jej_word) == token_no_vowels:
                 return self.preserve_casing(token, tag_word)
+
         corrected, dist = find_closest_word(lowered, self.word_map.keys(), max_distance=1)
         if corrected:
             normalized = self.word_map[corrected]
             return self.preserve_casing(token, normalized)
+
         normalized = self._multi_replace(lowered, self.char_map)
         return self.preserve_casing(token, normalized)
 
@@ -59,33 +67,38 @@ class JejemonNormalizer:
             text = text.replace(key, replace_map[key])
         return text
 
-    def normalize(self, text, tokenizer=None):
+    def normalize(self, text, tokenizer=None, max_passes=3):
         if tokenizer is None:
             tokenizer = Tokenizer()
         tokens = tokenizer.tokenize(text)
-        return "".join([self.normalize_token(tok) for tok in tokens])
+
+        for i in range(max_passes):
+            new_tokens = [self.normalize_token(tok) for tok in tokens]
+            if new_tokens == tokens:
+                break
+            tokens = new_tokens
+
+        return "".join(tokens)
 
     def jejemonize_token(self, token, seed=None):
         if token.strip() == "":
             return token
+
         if seed is not None:
             random.seed(seed)
+
         lowered = token.lower()
-        if lowered in self.word_map:
-            jej = self.word_map[lowered]
-            return self.preserve_casing(token, jej)
-        token_no_vowels = self.remove_vowels(lowered)
-        for tag_word, jej_word in self.word_map.items():
-            if self.remove_vowels(tag_word) == token_no_vowels:
-                jej_word = jej_word.replace('~', '')
-                return self.preserve_casing(token, jej_word)
-        jej = ""
-        for c in lowered:
-            if c in self.original_char_map:
-                jej += random.choice(self.original_char_map[c])
-            else:
-                jej += c
-        jej = jej.replace('~', '')
+
+        if lowered in self.reverse_word_map:
+            jej = self.reverse_word_map[lowered]
+        else:
+            jej = ""
+            for c in lowered:
+                if c in self.original_char_map:
+                    jej += random.choice(self.original_char_map[c])
+                else:
+                    jej += c
+
         return self.preserve_casing(token, jej)
 
     def jejemonize(self, text, tokenizer=None, seed=None):
@@ -99,6 +112,7 @@ def edit_distance(s1, s2):
         return edit_distance(s2, s1)
     if len(s2) == 0:
         return len(s1)
+
     previous_row = list(range(len(s2) + 1))
     for i, c1 in enumerate(s1):
         current_row = [i + 1]

@@ -1,17 +1,6 @@
-# WPM Typing Test - N-Grams Implementation (pygame)
+# WPM Typing Test - Orangutype 🐒⌨️
 
-Pure Python desktop application using pygame that measures WPM with N-grams corpus-based text generation. Uses `corpora/eng_sentences.txt`.
-
-## Features
-
-- **Real-time WPM calculation** with live statistics
-- **N-grams implementation** (tri-grams) for text generation
-- **Configurable test duration** (15s, 30s, 60s, 120s)
-- **Accuracy measurement** with word-by-word comparison and highlighting
-- **Live progress tracking** with countdown timer
-- **Results panel** with WPM, Accuracy, Time, and Words
-- **Interactive input field** with "Start here" placeholder and blinking cursor
-- **Resizable window** with responsive layout
+ Python desktop application using pygame that measures WPM with N-grams corpus-based text generation. Uses `corpora/eng_sentences.txt`.
 
 ## Project Structure
 
@@ -26,19 +15,11 @@ N-Grams Implementation/
 └── README.md
 ```
 
-## Technology Stack
-
-- **UI**: pygame (no web stack)
-- **Logic**: Python (pure implementation, no external libraries besides pygame)
-- **Architecture**: Modular OOP design with separation of concerns
-
 ## N-Grams Implementation
 
 - **Corpus Loading**: Reads from `corpora/eng_sentences.txt` (one sentence per line)
 - **N-gram Building**: Creates tri-gram mappings and next-word distributions
 - **Text Generation**: Generates coherent text with fallback to random words
-
-## Setup Instructions
 
 ### Prerequisites
 
@@ -50,7 +31,9 @@ N-Grams Implementation/
 1. Navigate to the project directory:
 
 ```bash
-cd "N-Grams Implementation"
+cd "MIDTERM"
+cd "Activity 1"
+cd "yesh-ngrams"
 ```
 
 2. Install dependencies:
@@ -82,7 +65,6 @@ The `backend.py` file contains:
 
 ## Notes
 
-- UI colors and layout mimic the original web version (header, time buttons, live stats, text area, results panel).
-- Keyboard shortcut: Ctrl+Shift+Enter to start a new test.
-- Input field shows "Start here" placeholder and has a blinking cursor when active.
-- Window is resizable with responsive layout that adapts to different screen sizes.
+- UI colors and layout (should improve) (header, time buttons, live stats, text area, results panel).
+- Input field shows "Start here" placeholder and has a blinking cursor when active. (this part is optional)
+- User profile is recommended. Where the user may able to see his/her progress. This may also use to track the improvements of user's wpm. 

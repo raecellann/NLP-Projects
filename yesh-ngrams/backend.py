@@ -31,7 +31,6 @@ class NGramModel:
             self.load_default_corpus()
 
     def load_corpus_from_text(self, file_path):
-        """Load a plain text corpus where each line is a sentence or fragment."""
         try:
             if os.path.exists(file_path):
                 with open(file_path, 'r', encoding='utf-8') as file:
@@ -131,17 +130,13 @@ class NGramModel:
 class TypingTest:
     def __init__(self):
         self.ngram_model = NGramModel(n=3)
-        # Default to the provided English sentences corpus
         self.corpus_path = "corpora/eng_sentences.txt"
         self.load_corpus()
         
     def load_corpus(self):
-        # Resolve path relative to this file for robustness
         base_dir = os.path.dirname(os.path.abspath(__file__))
         candidates = []
-        # Primary: eng_sentences.txt
         candidates.append(os.path.join(base_dir, self.corpus_path))
-        # Fallbacks: without extension, common variants
         for alt in [
             'corpora/eng_sentences',
             'corpora/eng_sentences.csv',
@@ -161,7 +156,6 @@ class TypingTest:
                 break
 
         if not loaded:
-            # Try original relative path using working directory
             _, ext = os.path.splitext(self.corpus_path)
             if ext.lower() == '.csv':
                 self.ngram_model.load_corpus_from_csv(self.corpus_path)

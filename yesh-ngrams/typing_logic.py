@@ -5,31 +5,25 @@ from backend import TypingTest
 
 class TypingTestLogic:
     def __init__(self):
-        # Backend typing test logic
         self.typing_test = TypingTest()
 
-        # Test state
         self.test_duration = 60
         self.test_start_ms = 0
         self.is_active = False
         self.test_started_once = False
 
-        # Text state
         self.current_text = ''
         self.words: List[str] = []
         self.current_word_index = 0
         self.typed_words: List[str] = []
         self.incorrect_words: List[Tuple[str, str, int]] = []
 
-        # Results storage
         self.final_results = {}
         self.test_end_ms = 0
 
-        # Preload a sample text
         self._load_sample_text()
 
     def _load_sample_text(self):
-        # Prefer n-gram generated text; fall back to random
         self.current_text = self.typing_test.get_random_text(use_ngrams=True, length=30)
         if not self.current_text:
             self.current_text = self.typing_test.get_random_text(use_ngrams=False, length=30)
@@ -39,7 +33,6 @@ class TypingTestLogic:
         self.incorrect_words = []
 
     def _load_new_text(self):
-        # Similar behavior to web: often pick a different corpora text, or generate via n-grams
         self.current_text = self.typing_test.get_random_text(use_ngrams=True, length=30)
         if not self.current_text:
             self.current_text = self.typing_test.get_random_text(use_ngrams=False, length=30)
@@ -48,7 +41,6 @@ class TypingTestLogic:
         self.typed_words = []
         self.incorrect_words = []
 
-    # Test controls
     def start_test(self):
         if self.is_active:
             return
@@ -58,14 +50,12 @@ class TypingTestLogic:
         self.current_word_index = 0
         self.typed_words = []
         self.incorrect_words = []
-        # Clear previous results when starting new test
         self.final_results = {}
 
     def end_test(self):
         if self.is_active:
             self.is_active = False
             self.test_end_ms = pygame.time.get_ticks()
-            # Calculate and store final results
             self._calculate_final_results()
 
     def reset_test(self):
@@ -84,28 +74,23 @@ class TypingTestLogic:
         self.test_duration = duration
 
     def _calculate_final_results(self):
-        """Calculate and store the final test results"""
         if not self.test_started_once or self.test_start_ms == 0:
             self.final_results = {}
             return
 
-        # Use test_end_ms if available, otherwise current time
         end_time = self.test_end_ms if self.test_end_ms > 0 else pygame.time.get_ticks()
         elapsed = (end_time - self.test_start_ms) / 1000.0
         
-        # Calculate WPM
         word_count = len(self.typed_words)
         minutes = elapsed / 60.0
         wpm = int(round(word_count / minutes)) if minutes > 0 else 0
         
-        # Calculate accuracy
         if self.current_word_index == 0:
             accuracy = 100
         else:
             correct_words = self.current_word_index - len(self.incorrect_words)
             accuracy = int(round((correct_words / self.current_word_index) * 100))
         
-        # Store the results
         self.final_results = {
             'wpm': wpm,
             'accuracy': accuracy,
@@ -115,7 +100,6 @@ class TypingTestLogic:
             'incorrect_words': self.incorrect_words
         }
 
-    # Stats calculations
     def elapsed_seconds(self) -> float:
         if not self.is_active:
             return 0.0
@@ -138,26 +122,21 @@ class TypingTestLogic:
         correct_words = self.current_word_index - len(self.incorrect_words)
         return int(round((correct_words / self.current_word_index) * 100)) if self.current_word_index > 0 else 100
 
-    # Word processing
     def process_word_input(self, word: str):
         if not self.is_active:
             return
 
-        # Skip empty words (just spaces)
         if not word.strip():
             return
 
-        # Add the word to typed words list
         self.typed_words.append(word.strip())
         
-        # Check if the word is correct
         expected = self.words[self.current_word_index] if self.current_word_index < len(self.words) else ''
         if word.strip() != expected:
             self.incorrect_words.append((expected, word.strip(), self.current_word_index))
 
         self.current_word_index += 1
 
-        # If we've completed all words, load more text
         if self.current_word_index >= len(self.words):
             self._load_new_text()
 
@@ -165,23 +144,19 @@ class TypingTestLogic:
         if not self.is_active:
             return False
         if self.remaining_seconds() <= 0:
-            self.end_test()  # This will calculate and store final results
+            self.end_test()  
             return True
         return False
 
     def get_results(self) -> dict:
-        """Get the stored final results"""
         if not self.final_results:
-            # If no final results, calculate current results
             if self.test_started_once and self.test_start_ms > 0:
                 elapsed = self.elapsed_seconds()
                 
-                # Calculate WPM
                 word_count = len(self.typed_words)
                 minutes = elapsed / 60.0
                 wpm = int(round(word_count / minutes)) if minutes > 0 else 0
                 
-                # Calculate accuracy
                 if self.current_word_index == 0:
                     accuracy = 100
                 else:
@@ -200,7 +175,6 @@ class TypingTestLogic:
         
         return self.final_results
 
-    # Getters
     def get_current_text(self) -> str:
         return self.current_text
 

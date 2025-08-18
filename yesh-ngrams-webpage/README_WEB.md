@@ -1,6 +1,6 @@
 # ORANGUTYPE - Web Version
 
-A retro-styled typing test application with HTML/CSS frontend and Python backend, featuring N-gram text generation.
+Retro-styled typing test served as a static site. A tiny Python server preloads corpora from `corpora/*.txt`, caches them with pickle, and emits a `corpora.js` file consumed by the frontend (no Flask, no API).
 
 ## Features
 
@@ -13,20 +13,11 @@ A retro-styled typing test application with HTML/CSS frontend and Python backend
 
 ## Quick Start
 
-### Option 1: Simple Launcher (Recommended)
+### Run
 ```bash
-python run_web.py
+python server.py
 ```
-This will automatically:
-- Start the web server
-- Open your default browser
-- Navigate to the application
-
-### Option 2: Manual Server Start
-```bash
-python web_server.py
-```
-Then manually open your browser and go to: `http://localhost:8000`
+This will build the corpora cache and open `http://localhost:8000`.
 
 ## How to Use
 
@@ -47,21 +38,21 @@ Then manually open your browser and go to: `http://localhost:8000`
 ## File Structure
 
 ```
-yesh-ngrams/
-├── index.html          # Main HTML interface
-├── style.css           # Retro pixelated styling
-├── web_server.py       # Python HTTP server
-├── run_web.py          # Easy launcher script
-├── backend.py          # N-gram text generation
-├── typing_logic.py     # Typing test logic
-├── corpora/            # Text corpus for training
-└── README_WEB.md       # This file
+yesh-ngrams-webpage/
+├── index.html          # Landing page with difficulty buttons
+├── test.html           # Typing UI, reads corpora from corpora.js
+├── style.css           # Styling
+├── server.py           # Static server + pickle cache builder
+├── backend.py          # N-gram utilities (desktop/legacy)
+├── typing_logic.py     # Desktop/legacy logic
+├── corpora/            # short/medium/long text files and corpora.pkl
+└── README_WEB.md
 ```
 
 ## Technical Details
 
 - **Frontend**: Pure HTML/CSS with vanilla JavaScript
-- **Backend**: Python HTTP server using built-in modules
+- **Backend**: Python static server using only built-in modules
 - **Text Generation**: N-gram language model (3-grams)
 - **No Dependencies**: Uses only Python standard library
 - **Cross-platform**: Works on Windows, macOS, and Linux
@@ -77,7 +68,7 @@ yesh-ngrams/
 ### Port Already in Use
 If you get a "port already in use" error:
 1. Stop any other servers running on port 8000
-2. Or modify the port in `web_server.py`
+2. Or run `python server.py 8001`
 
 ### Browser Not Opening
 If the browser doesn't open automatically:
@@ -86,8 +77,8 @@ If the browser doesn't open automatically:
 
 ### Text Not Loading
 If no text appears:
-1. Check that `corpora/eng_sentences.txt` exists
-2. Ensure all Python files are in the same directory
+1. Ensure `corpora/short-texts.txt`, `medium-texts.txt`, and `long-texts.txt` exist
+2. Delete `corpora/corpora.pkl` to force a rebuild, then rerun `python server.py`
 
 ## Customization
 
@@ -107,7 +98,7 @@ Place your text files in the `corpora/` folder:
 - `.csv` files for structured data
 
 ### Modifying Test Duration
-Edit the time options in `index.html`:
+Edit the time options in `test.html`:
 ```html
 <span class="time-option" data-duration="15">15</span>
 <span class="time-option" data-duration="30">30</span>

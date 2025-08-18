@@ -175,7 +175,7 @@ class ModernButton:
             glow_rect = scaled_rect.inflate(20, 20)
             glow_surf = pygame.Surface((glow_rect.width, glow_rect.height), pygame.SRCALPHA)
             glow_alpha = int(50 * self.glow_intensity)
-            pygame.draw.rect(glow_surf, (*self.current_color, glow_alpha), glow_surf.get_rect(), border_radius=20)
+            pygame.draw.rect(glow_surf, (*self.current_color, glow_alpha), glow_surf.get_rect(), border_radius=18)
             screen.blit(glow_surf, glow_rect)
         
         # Draw button shadow
@@ -254,6 +254,8 @@ class TypingGame:
         self.difficulty = "Medium"
         self.n_gram = 3
         self.num_phrases = 8
+        self.time_limit = 60
+        self.time_remaining = self.time_limit
         
         # UI elements
         self.setup_ui()
@@ -275,7 +277,7 @@ class TypingGame:
         self.easy_button = ModernButton(center_x, 320, button_width, button_height, "Easy Mode", SUCCESS_GREEN, SUCCESS_DARK, "🌱", 36)
         self.medium_button = ModernButton(center_x, 420, button_width, button_height, "Medium Mode", PRIMARY_BLUE, SECONDARY_BLUE, "⚡", 36)
         self.hard_button = ModernButton(center_x, 520, button_width, button_height, "Hard Mode", WARNING_ORANGE, WARNING_DARK, "🔥", 36)
-        self.custom_button = ModernButton(center_x, 620, button_width, button_height, "Custom Settings", ACCENT_BLUE, (142, 68, 173), "⚙️", 36)
+        self.custom_button = ModernButton(center_x, 620, button_width, button_height, f"Time: {self.time_limit}s", ACCENT_BLUE, (142, 68, 173), "⏱️", 36)
         self.exit_button = ModernButton(center_x, 720, button_width, button_height, "Exit", NEUTRAL_GRAY, NEUTRAL_DARK, "🚪", 36)
         
         # Game buttons
@@ -422,9 +424,16 @@ class TypingGame:
         self.menu_button.draw(self.screen)
         
         # Modern info panels with glass effect
+        # Update countdown
+        if self.is_typing:
+            elapsed = time.time() - self.start_time
+            self.time_remaining = max(0, self.time_limit - elapsed)
+            if self.time_remaining <= 0:
+                self.end_game()
+
         info_panels = [
             (f"🎯 {self.difficulty}", PRIMARY_BLUE, SCREEN_WIDTH - 350, 25),
-            (f"⏱️ {time.time() - self.start_time:.1f}s" if self.is_typing else "⌨️ Press any key to start...", SECONDARY_BLUE, SCREEN_WIDTH - 350, 85)
+            (f"⏱️ {self.time_remaining:.1f}s remaining" if self.is_typing else "⌨️ Press any key to start...", SECONDARY_BLUE, SCREEN_WIDTH - 350, 85)
         ]
         
         if self.is_typing and self.total_chars > 0:
@@ -613,22 +622,40 @@ class TypingGame:
     def start_game(self, difficulty: str):
         self.difficulty = difficulty
         if difficulty == "Easy":
-            self.n_gram, self.num_phrases = 2, 5
+            self.n_gram = 2
+            base_target_len = 6
+            avg_word_len = 3.5
         elif difficulty == "Medium":
-            self.n_gram, self.num_phrases = 3, 8
+            self.n_gram = 3
+            base_target_len = 8
+            avg_word_len = 6.0
         elif difficulty == "Hard":
-            self.n_gram, self.num_phrases = 4, 10
+            self.n_gram = 4
+            base_target_len = 10
+            avg_word_len = 8.0
         
         try:
-            ngrams_obj = Ngrams(corpus_file="corpus.txt", n=self.n_gram, num_phrases=self.num_phrases)
+            # Compute dynamic number of phrases based on time limit and difficulty
+            approx_chars_per_phrase = int(base_target_len * (avg_word_len + 1))
+            min_chars = int(self.time_limit * 8)  # baseline 8 chars/sec
+            num_phrases = max(5, min(40, (min_chars + approx_chars_per_phrase - 1) // approx_chars_per_phrase))
+            ngrams_obj = Ngrams(corpus_file="corpora/corpora.pkl", n=self.n_gram, num_phrases=num_phrases, difficulty=self.difficulty.lower())
             test_phrases = ngrams_obj.generate_phrases()
             self.target_text = " ".join(phrase for phrase in test_phrases if phrase.strip())
+            # Top up once if content too short
+            if len(self.target_text) < min_chars:
+                extra_needed = min_chars - len(self.target_text)
+                extra_phrases = max(3, (extra_needed + approx_chars_per_phrase - 1) // approx_chars_per_phrase)
+                ngrams_obj = Ngrams(corpus_file="corpora/corpora.pkl", n=self.n_gram, num_phrases=extra_phrases, difficulty=self.difficulty.lower())
+                test_phrases += ngrams_obj.generate_phrases()
+                self.target_text = " ".join(phrase for phrase in test_phrases if phrase.strip())
             self.total_chars = len(self.target_text)
             self.state = GAME
             self.typing_text = ""
             self.current_char_index = 0
             self.correct_chars = 0
             self.is_typing = False
+            self.time_remaining = float(self.time_limit)
         except Exception as e:
             print(f"Error generating text: {e}")
             self.target_text = "The quick brown fox jumps over the lazy dog. This is a sample text for typing practice."
@@ -670,7 +697,12 @@ class TypingGame:
                     self.end_game()
     
     def end_game(self):
-        self.elapsed_time = time.time() - self.start_time
+        # If timer ran out, clamp elapsed to limit
+        if self.start_time:
+            elapsed = time.time() - self.start_time
+            self.elapsed_time = min(elapsed, float(self.time_limit))
+        else:
+            self.elapsed_time = float(self.time_limit)
         elapsed_minutes = self.elapsed_time / 60
         
         if elapsed_minutes > 0:
@@ -706,7 +738,14 @@ class TypingGame:
                         elif self.hard_button.is_clicked(event):
                             self.start_game("Hard")
                         elif self.custom_button.is_clicked(event):
-                            self.start_game("Medium")  # Default to medium for now
+                            # Cycle time limit: 30 -> 60 -> 120 -> 30
+                            if self.time_limit == 30:
+                                self.time_limit = 60
+                            elif self.time_limit == 60:
+                                self.time_limit = 120
+                            else:
+                                self.time_limit = 30
+                            self.custom_button.text = f"Time: {self.time_limit}s"
                         elif self.exit_button.is_clicked(event):
                             running = False
                     

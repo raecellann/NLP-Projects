@@ -30,14 +30,15 @@ body {
 
 /* App Container */
 .app-container {
-    width: 100vw;
-    height: 100vh;
+    width: calc(100vw - 16px);
+    height: calc(100vh - 16px);
     display: flex;
     flex-direction: column;
     position: relative;
     border: 3px solid transparent;
     background: linear-gradient(var(--bg-color), var(--bg-color)) padding-box,
                 var(--border-gradient) border-box;
+    margin: 8px;
 }
 
 /* Landing Page */
@@ -143,29 +144,44 @@ body {
 
 /* Text Area */
 .text-area {
-    width: 90%;
-    max-width: 1000px;
-    height: 300px;
+    width: clamp(720px, 85vw, 1100px);
+    min-height: 260px;
+    max-height: 450px;
     background-color: var(--modal-bg);
     border: 2px solid var(--accent-purple);
-    border-radius: 8px;
-    padding: 30px;
-    margin-bottom: 20px;
+    border-radius: 12px;
+    padding: 24px 40px;
+    margin: 12px auto 20px auto;
     position: relative;
     cursor: text;
+    overflow-y: auto;
+    box-sizing: border-box;
 }
 
 .text-content {
-    font-size: 1.2rem;
-    line-height: 1.8;
-    word-spacing: 4px;
-    letter-spacing: 1px;
+    font-size: 1.15rem;
+    line-height: 1.9;
+    word-spacing: 5px;
+    letter-spacing: 0.5px;
     text-transform: lowercase;
+    text-align: center;
+    overflow-wrap: anywhere;
+    word-break: break-word;
+}
+
+/* Slide up animation for next page */
+.slide-up {
+    animation: slideUp 200ms ease-out;
+}
+
+@keyframes slideUp {
+    0% { transform: translateY(8px); opacity: 0.7; }
+    100% { transform: translateY(0); opacity: 1; }
 }
 
 .word {
     display: inline;
-    margin-right: 8px;
+    margin-right: 12px;
     transition: all 0.2s ease;
 }
 
@@ -317,7 +333,7 @@ body {
 .footer {
     background-color: var(--modal-bg);
     border-top: 2px solid var(--accent-purple);
-    padding: 20px 30px;
+    padding: 16px 24px;
 }
 
 .control-row {
@@ -487,12 +503,13 @@ body {
     
     .text-area {
         width: 95%;
-        height: 250px;
+        max-height: 320px;
         padding: 20px;
     }
     
     .text-content {
         font-size: 1rem;
+        word-spacing: 4px;
     }
     
     .modal-content {
@@ -512,13 +529,14 @@ body {
     
     .text-area {
         width: 98%;
-        height: 200px;
+        max-height: 260px;
         padding: 15px;
     }
     
     .text-content {
-        font-size: 0.9rem;
+        font-size: 0.95rem;
         line-height: 1.6;
+        word-spacing: 3px;
     }
     
     .modal-content {

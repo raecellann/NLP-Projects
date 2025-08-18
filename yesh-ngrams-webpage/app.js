@@ -1,3 +1,4 @@
+// typing_test.js (web) — mirrors naming from N-grams folder
 document.addEventListener('DOMContentLoaded', () => {
 	const search = new URLSearchParams(location.search);
 	const difficulty = (search.get('difficulty') || 'medium').toLowerCase();
@@ -11,8 +12,10 @@ document.addEventListener('DOMContentLoaded', () => {
 	let testActive = false;
 	let startTime = null;
 	let testDuration = 60;
-	let words = [];
-	let currentWordIndex = 0;
+	let allWords = [];
+	let currentWordIndex = 0; // global index across full text
+	let pageStartIndex = 0;
+	let pageWordCount = 0;
 	let typedWords = [];
 	let incorrectWords = [];
 	let grossCharsTyped = 0; // for WPM (typed chars)
@@ -24,15 +27,10 @@ document.addEventListener('DOMContentLoaded', () => {
 	function pickText() {
 		const corp = (window.CORPORA && window.CORPORA[difficulty]) || [];
 		const pool = corp.length ? corp : (window.CORPORA ? (window.CORPORA.medium || []) : []);
-		// Pick up to 4 lines then display as a continuous stream
-		const batch = [];
-		for (let i = 0; i < 4; i++) {
-			const line = pool[Math.floor(Math.random() * pool.length)];
-			if (line) batch.push((line + '').trim());
-		}
-		const text = batch.join(' ');
-		words = text.split(/\s+/);
-		displayText(batch);
+		const phrases = generatePhrasesFromCorpus(pool, difficulty, testDuration);
+		const text = phrases.join(' ');
+		allWords = text.split(/\s+/);
+		renderPage(true);
 	}
 
 	function startTest() {
@@ -77,9 +75,9 @@ document.addEventListener('DOMContentLoaded', () => {
 	function processWord(word) {
 		if (!testActive) return;
 		typedWords.push(word);
-		const expected = words[currentWordIndex];
+		const expected = allWords[currentWordIndex];
 		const isCorrect = word === expected;
-		const el = document.querySelector(`[data-index="${currentWordIndex}"]`);
+		const el = document.querySelector(`[data-gidx="${currentWordIndex}"]`);
 		if (el) {
 			el.classList.remove('current');
 			el.classList.add(isCorrect ? 'correct' : 'incorrect');
@@ -95,27 +93,62 @@ document.addEventListener('DOMContentLoaded', () => {
 		if (normalizeWord(word) === normalizeWord(expected)) correctWordsTyped += 1;
 		currentWordIndex++;
 		updateDisplay();
-		if (currentWordIndex >= words.length) {
-			pickText();
-			currentWordIndex = 0;
-			updateDisplay();
+		if (currentWordIndex >= pageStartIndex + pageWordCount) {
+			advancePage();
 		}
 	}
 
-	function displayText(sentences) {
+	function renderPage(animated = false) {
+		const textArea = document.getElementById('textArea');
 		const textContent = document.getElementById('textContent');
+		pageWordCount = computeFittingCount(textArea, textContent, pageStartIndex);
 		textContent.innerHTML = '';
-		let wordCounter = 0;
-		const toRender = Array.isArray(sentences) ? sentences.join(' ') : String(sentences);
-		const split = toRender.split(/\s+/);
-		split.forEach(w => {
+		for (let i = 0; i < pageWordCount; i++) {
+			const gidx = pageStartIndex + i;
+			const w = allWords[gidx] || '';
 			const span = document.createElement('span');
 			span.textContent = w + ' ';
 			span.className = 'word';
-			span.dataset.index = wordCounter++;
+			span.dataset.gidx = String(gidx);
 			textContent.appendChild(span);
-		});
+		}
+		if (animated) {
+			textContent.classList.remove('slide-up');
+			// force reflow
+			void textContent.offsetWidth;
+			textContent.classList.add('slide-up');
+		}
 		updateDisplay();
+	}
+
+	function computeFittingCount(containerEl, contentEl, startIndex) {
+		const maxIndex = allWords.length;
+		let count = 0;
+		contentEl.innerHTML = '';
+		const buffer = document.createDocumentFragment();
+		while (startIndex + count < maxIndex) {
+			const gidx = startIndex + count;
+			const span = document.createElement('span');
+			span.textContent = (allWords[gidx] || '') + ' ';
+			span.className = 'word';
+			span.dataset.gidx = String(gidx);
+			buffer.appendChild(span);
+			contentEl.appendChild(span);
+			// Allow content to layout, then check overflow
+			if (contentEl.scrollHeight > containerEl.clientHeight - 6) {
+				// remove last overflowed span and stop
+				contentEl.removeChild(span);
+				break;
+			}
+			count++;
+		}
+		return Math.max(1, count);
+	}
+
+	function advancePage() {
+		// move start to currentWordIndex to keep cursor at top row
+		pageStartIndex = currentWordIndex;
+		renderPage(true);
 	}
 
 	function updateDisplay() {
@@ -123,11 +156,12 @@ document.addEventListener('DOMContentLoaded', () => {
 		els.forEach((el, i) => {
 			const wasCorrect = el.classList.contains('correct');
 			const wasIncorrect = el.classList.contains('incorrect');
+			const gidx = parseInt(el.dataset.gidx || '-1', 10);
 			el.className = 'word';
-			if (i < currentWordIndex) {
+			if (gidx < currentWordIndex) {
 				if (wasCorrect) el.classList.add('correct');
 				else if (wasIncorrect) el.classList.add('incorrect');
-			} else if (i === currentWordIndex) {
+			} else if (gidx === currentWordIndex) {
 				el.classList.add('current');
 			}
 		});
@@ -135,7 +169,7 @@ document.addEventListener('DOMContentLoaded', () => {
 
 	function updateCurrentWordDisplay(typedText, expectedWord) {
 		if (!expectedWord) return;
-		const el = document.querySelector(`[data-index="${currentWordIndex}"]`);
+		const el = document.querySelector(`[data-gidx="${currentWordIndex}"]`);
 		if (!el) return;
 		let html = '';
 		for (let i = 0; i < Math.max(typedText.length, expectedWord.length); i++) {
@@ -202,6 +236,138 @@ document.addEventListener('DOMContentLoaded', () => {
 		});
 	}
 
+	// ---- N-grams inspired phrase generation (wordlist sampling) ----
+	function generatePhrasesFromCorpus(lines, mode, timeLimitSeconds) {
+		const tokens = tokenizeLines(lines);
+		if (tokens.length === 0) return ['keep typing to begin the test'];
+		const alphaTokens = tokens.filter(t => /^[a-z]+$/.test(t));
+		const freq = countFrequencies(alphaTokens);
+		let vocabulary = uniquePreserve(alphaTokens);
+		// Difficulty word-length ranges
+		function inLengthRange(w) {
+			const L = w.length;
+			if (mode === 'easy') return L <= 4;
+			if (mode === 'medium') return L >= 5 && L <= 7;
+			return L >= 8; // hard
+		}
+		vocabulary = vocabulary.filter(inLengthRange);
+		// Additional quality filters per mode
+		if (mode === 'easy') {
+			const commonTwo = new Set(['of','to','in','is','on','by','or','at','an','as','it','be','he','we','me','my','do','go','no','so','up','us']);
+			const filtered = [];
+			for (const w of vocabulary) {
+				const L = w.length;
+				if (L === 2) {
+					if (commonTwo.has(w)) filtered.push(w);
+					continue;
+				}
+				if (L >= 3) {
+					if (containsVowel(w) && (freq[w] || 0) >= 2) filtered.push(w);
+				}
+			}
+			if (filtered.length >= Math.max(10, getTargetPhraseLength(mode))) vocabulary = filtered;
+		} else if (mode === 'medium') {
+			const med = vocabulary.filter(w => (freq[w] || 0) >= 2);
+			if (med.length >= Math.max(20, getTargetPhraseLength(mode))) vocabulary = med;
+		} else {
+			const hard = vocabulary.filter(w => (freq[w] || 0) >= 1);
+			if (hard.length >= Math.max(20, getTargetPhraseLength(mode))) vocabulary = hard;
+		}
+
+		// Estimate phrase count to fit time limit (chars/sec baseline ~8)
+		const { baseTargetLen, avgWordLen } = difficultyParams(mode);
+		const approxCharsPerPhrase = Math.max(1, Math.round(baseTargetLen * (avgWordLen + 1)));
+		const minChars = Math.max(80, Math.round(timeLimitSeconds * 8));
+		let numPhrases = Math.max(5, Math.min(40, Math.ceil(minChars / approxCharsPerPhrase)));
+
+		const phrases = generateUniqueWordlistPhrases(vocabulary, numPhrases, mode);
+		// Top up once if still short
+		const combined = phrases.join(' ');
+		if (combined.length < minChars) {
+			const extraNeeded = minChars - combined.length;
+			const extraCount = Math.max(3, Math.ceil(extraNeeded / approxCharsPerPhrase));
+			phrases.push(...generateUniqueWordlistPhrases(vocabulary, extraCount, mode));
+		}
+		return phrases;
+	}
+
+	function tokenizeLines(lines) {
+		const text = (lines || []).map(s => String(s).toLowerCase()).join('\n');
+		// Split to sentences then words+punc; keep words only for phrase generation
+		const rough = text.split(/\s+/g);
+		return rough.map(t => t.replace(/[^a-z]/gi, '')).filter(Boolean);
+	}
+
+	function countFrequencies(arr) {
+		const m = Object.create(null);
+		for (const x of arr) m[x] = (m[x] || 0) + 1;
+		return m;
+	}
+
+	function uniquePreserve(arr) {
+		const seen = new Set();
+		const out = [];
+		for (const x of arr) if (!seen.has(x)) { seen.add(x); out.push(x); }
+		return out;
+	}
+
+	function containsVowel(w) {
+		return /[aeiou]/.test(w);
+	}
+
+	function getTargetPhraseLength(mode) {
+		const base = { easy: 6, medium: 8, hard: 10 }[mode] || 8;
+		return base + Math.floor(Math.random() * 4); // +0..3
+	}
+
+	function difficultyParams(mode) {
+		if (mode === 'easy') return { baseTargetLen: 6, avgWordLen: 3.5 };
+		if (mode === 'medium') return { baseTargetLen: 8, avgWordLen: 6.0 };
+		return { baseTargetLen: 10, avgWordLen: 8.0 };
+	}
+
+	function generateUniqueWordlistPhrases(words, numPhrases, mode) {
+		const phrases = [];
+		const used = new Set();
+		for (let k = 0; k < numPhrases; k++) {
+			const targetLen = getTargetPhraseLength(mode);
+			let available = words.filter(w => !used.has(w));
+			let sampled = [];
+			if (available.length >= targetLen) {
+				sampled = sampleUnique(available, targetLen);
+			} else if (available.length > 0) {
+				sampled = available.slice();
+				let remaining = targetLen - sampled.length;
+				while (remaining > 0 && words.length > 0) {
+					const cand = words[Math.floor(Math.random() * words.length)];
+					if (sampled.length && cand === sampled[sampled.length - 1]) continue;
+					sampled.push(cand);
+					remaining--;
+				}
+			} else {
+				for (let i = 0; i < targetLen; i++) {
+					const cand = words[Math.floor(Math.random() * words.length)];
+					if (sampled.length && cand === sampled[sampled.length - 1]) continue;
+					sampled.push(cand);
+				}
+			}
+			for (const w of sampled) used.add(w);
+			phrases.push(sampled.join(' '));
+		}
+		return phrases;
+	}
+
+	function sampleUnique(arr, k) {
+		const copy = arr.slice();
+		const out = [];
+		for (let i = 0; i < k && copy.length > 0; i++) {
+			const idx = Math.floor(Math.random() * copy.length);
+			out.push(copy[idx]);
+			copy.splice(idx, 1);
+		}
+		return out;
+	}
+
 	// Events
 	textArea.addEventListener('click', () => { if (!testActive) startTest(); hiddenInput.focus(); });
 	hiddenInput.addEventListener('focus', () => { if (testActive) updateCursorPosition(); });
@@ -209,7 +375,7 @@ document.addEventListener('DOMContentLoaded', () => {
 	hiddenInput.addEventListener('input', (e) => {
 		if (!testActive) return;
 		const input = e.target.value;
-		const currentWord = words[currentWordIndex];
+		const currentWord = allWords[currentWordIndex];
 		if (input && input.includes(' ')) {
 			const parts = input.split(' ');
 			parts.forEach(w => { if (w.trim()) processWord(w.trim()); });
@@ -250,5 +416,6 @@ document.addEventListener('DOMContentLoaded', () => {
 	updateTimeOptions();
 	pickText();
 });
+
 
 

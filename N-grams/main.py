@@ -1,10 +1,9 @@
-from ngrams import Ngrams
-from utils import print_menu, prompt
-from typing_test import run_typing_test_with_ngrams
+from ngrams import Ngrams, print_menu, prompt
+from game_controller import run_typing_test_with_ngrams
 
 
 def main():
-    print("🎯 N-Gram Phrase Generator")
+    print("🎯 N-Grams WPM")
     print("Generate text phrases using n-gram language models with difficulty levels!\n")
     
     while True:
@@ -59,7 +58,6 @@ def get_custom_settings():
     print("\n=== CUSTOM SETTINGS ===")
     
     try:
-        # Difficulty selection
         print("\nChoose difficulty level:")
         print("1. Easy (basic/common words)")
         print("2. Medium (moderately difficult words)")
@@ -76,14 +74,12 @@ def get_custom_settings():
             print("❌ Invalid difficulty choice, defaulting to Medium")
             difficulty = "medium"
         
-        # N-gram order
         n_input = prompt("Enter n-gram order (2-5): ")
         n = int(n_input)
         if n < 2 or n > 5:
             print("❌ N-gram order must be between 2 and 5")
             return None
             
-        # Number of phrases
         phrases_input = prompt("Enter number of phrases (3-15): ")
         phrases = int(phrases_input)
         if phrases < 3 or phrases > 15:
@@ -98,12 +94,11 @@ def get_custom_settings():
 
 
 def show_difficulty_stats():
-    """Display complexity stats per mode (analyzed within each section)."""
     print("\n📊 DIFFICULTY STATISTICS (per mode)")
     print("Analyzing each corpora section for word complexity...")
     try:
         for diff in ("easy", "medium", "hard"):
-            ngrams_obj = Ngrams(corpus_file="corpora/corpora.pkl", difficulty=diff)
+            ngrams_obj = Ngrams(corpus_file=["corpora/corpora.pkl"], difficulty=diff)
             stats = ngrams_obj.get_difficulty_stats()
             print(f"\n— {diff.capitalize()} section —")
             print(f"Easy-like:   {stats['easy']['count']} | Sample: {', '.join(stats['easy']['sample_words'])}")
@@ -128,10 +123,9 @@ def verify_corpora_and_generation():
         with open("corpora/corpora.pkl", "rb") as f:
             data = pickle.load(f)
         if not isinstance(data, dict):
-            print("❌ corpora.pkl is not a dict; cannot verify sections")
-            return
-
+            data = {}
         lower_map = {str(k).lower(): k for k in data.keys()}
+
         def get_list_for(key_aliases):
             for alias in key_aliases:
                 if alias in lower_map:
@@ -146,11 +140,10 @@ def verify_corpora_and_generation():
         med_list = get_list_for(["medium", "moderate"])
         hard_list = get_list_for(["hard", "difficult", "deep", "long"])
 
-        easy_set = {normalize(s) for s in easy_list}
-        med_set = {normalize(s) for s in med_list}
-        hard_set = {normalize(s) for s in hard_list}
+        easy_set = {normalize(w) for w in easy_list}
+        med_set = {normalize(w) for w in med_list}
+        hard_set = {normalize(w) for w in hard_list}
 
-        # Overlap checks
         med_easy_overlap = med_set & easy_set
         hard_easy_overlap = hard_set & easy_set
         hard_med_overlap = hard_set & med_set
@@ -172,11 +165,10 @@ def verify_corpora_and_generation():
         show_overlap("Hard ∩ Easy", hard_easy_overlap)
         show_overlap("Hard ∩ Medium", hard_med_overlap)
 
-        # Generation validation per difficulty
         print("\n🧪 Generation validation (words must belong to the selected section):")
         for diff, allowed_set in [("easy", easy_set), ("medium", med_set), ("hard", hard_set)]:
             try:
-                ngrams_obj = Ngrams(corpus_file="corpora/corpora.pkl", n=3, num_phrases=6, difficulty=diff)
+                ngrams_obj = Ngrams(corpus_file=["corpora/corpora.pkl"], n=3, num_phrases=6, difficulty=diff)
                 phrases = ngrams_obj.generate_phrases()
                 text = " ".join(phrases)
                 words = re.findall(r"[A-Za-z]+", text)
@@ -238,7 +230,7 @@ def generate_phrases(n, phrases, difficulty):
     print(f"   • Difficulty level: {difficulty.capitalize()}")
     
     try:
-        ngrams_obj = Ngrams(corpus_file="corpora/corpora.pkl", n=n, num_phrases=phrases, difficulty=difficulty)
+        ngrams_obj = Ngrams(corpus_file=["corpora/corpora.pkl"], n=n, num_phrases=phrases, difficulty=difficulty)
         
         print("\n📝 Generating phrases...")
         test_phrases = ngrams_obj.generate_phrases()

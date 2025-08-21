@@ -138,6 +138,31 @@ class Ngrams:
             text = self._load_text(corpus_file, difficulty_section=difficulty_section)
         
         tokens = self._tokenize(text, special_tokens=True)
+        
+        if random.random() < 0.2:
+            shuffled_tokens = []
+            current_sentence = []
+            for token in tokens:
+                if token == "<START>":
+                    if current_sentence:
+                        random.shuffle(current_sentence)
+                        shuffled_tokens.extend(current_sentence)
+                        current_sentence = []
+                    shuffled_tokens.append(token)
+                elif token == "<END>":
+                    current_sentence.append(token)
+                    random.shuffle(current_sentence)
+                    shuffled_tokens.extend(current_sentence)
+                    current_sentence = []
+                else:
+                    current_sentence.append(token)
+            
+            if current_sentence:
+                random.shuffle(current_sentence)
+                shuffled_tokens.extend(current_sentence)
+            
+            tokens = shuffled_tokens
+        
         self._tokens_cache = tokens
         return tokens
 
@@ -222,6 +247,10 @@ class Ngrams:
         return word_difficulty
 
     def generate_phrases(self) -> List[str]:
+        self.clear_cache()
+        
+        random.seed()
+        
         tokens = self._get_tokens(self.corpus_file, difficulty_section=self.difficulty)
         return self._generate_phrases(tokens, self.num_phrases)
 
@@ -241,13 +270,36 @@ class Ngrams:
             return length >= 8
 
         phrases: List[str] = []
+        used_phrases = set()
+        
         for _ in range(num_phrases):
             target_len = self._get_target_phrase_length()
-            phrase_words = self._generate_phrase_with_model(models_by_order, unigram_counts, target_len, in_length_range)
-            if not phrase_words:
-                phrases.extend(self._generate_fallback_phrases(tokens, 1))
-            else:
-                phrases.append(" ".join(phrase_words))
+            max_attempts = 10
+            
+            for attempt in range(max_attempts):
+                phrase_words = self._generate_phrase_with_model(models_by_order, unigram_counts, target_len, in_length_range)
+                if not phrase_words:
+                    fallback_phrase = self._generate_fallback_phrases(tokens, 1)[0]
+                    if fallback_phrase not in used_phrases:
+                        phrases.append(fallback_phrase)
+                        used_phrases.add(fallback_phrase)
+                    break
+                else:
+                    phrase = " ".join(phrase_words)
+                    if phrase not in used_phrases:
+                        phrases.append(phrase)
+                        used_phrases.add(phrase)
+                        break
+                    if attempt < max_attempts - 1:
+                        target_len = self._get_target_phrase_length()
+                        continue
+                    else:
+                        variation = self._create_phrase_variation(phrase_words)
+                        if variation not in used_phrases:
+                            phrases.append(variation)
+                            used_phrases.add(variation)
+                        break
+        
         return phrases
 
     def _build_ngram_model(self, tokens: List[str]) -> Tuple[Dict[int, Dict[Tuple[str, ...], Counter]], Counter]:
@@ -295,7 +347,17 @@ class Ngrams:
     ) -> List[str]:
         n = max(2, int(self.n))
         words: List[str] = []
-        context = ["<START>"] * (n - 1)
+        
+        if random.random() < 0.3:
+            all_words = [tok for tok in unigram_counts.keys() if tok.isalpha() and tok not in ["<START>", "<END>"]]
+            if all_words:
+                random_start = random.choice(all_words)
+                context = [random_start] + ["<START>"] * (n - 2) if n > 2 else [random_start]
+            else:
+                context = ["<START>"] * (n - 1)
+        else:
+            context = ["<START>"] * (n - 1)
+        
         max_steps = target_words * 3
 
         for _ in range(max_steps):
@@ -347,13 +409,23 @@ class Ngrams:
                 if dist:
                     denom = sum(dist.values()) or 1
                     p += weight * (dist.get(tok, 0) / denom)
+            p += random.uniform(0, 0.01)
             scores[tok] = p
 
         good_tokens = [t for t in candidates if t == "<END>" or (t.isalpha() and in_length_range_fn(len(t)))]
         pool = good_tokens if good_tokens else candidates
 
+        temperature = 1.2 + random.uniform(0, 0.3)
+        
+        if temperature != 1.0:
+            for tok in pool:
+                scores[tok] = scores.get(tok, 0.0) ** (1.0 / temperature)
+
         total = sum(scores.get(t, 0.0) for t in pool)
         if total <= 0:
+            return random.choice(pool)
+
+        if random.random() < 0.1:
             return random.choice(pool)
 
         r = random.random() * total
@@ -424,6 +496,21 @@ class Ngrams:
     def _get_target_phrase_length(self) -> int:
         base_length = self._difficulty_lengths.get(self.difficulty, 8)
         return base_length + random.randint(0, 3)
+    
+    def _create_phrase_variation(self, phrase_words: List[str]) -> str:
+        if not phrase_words:
+            return ""
+        
+        if len(phrase_words) > 1 and random.random() < 0.3:
+            shuffled = phrase_words[:]
+            random.shuffle(shuffled)
+            return " ".join(shuffled)
+        elif len(phrase_words) > 2 and random.random() < 0.4:
+            start = random.randint(0, len(phrase_words) - 2)
+            end = random.randint(start + 1, len(phrase_words))
+            return " ".join(phrase_words[start:end])
+        else:
+            return " ".join(phrase_words) + " " + random.choice(["now", "here", "there", "then", "soon"])
 
     def get_word_frequencies(self, top_k: int = 20) -> List[Tuple[str, int]]:
         tokens = self._get_tokens(self.corpus_file, difficulty_section=self.difficulty)

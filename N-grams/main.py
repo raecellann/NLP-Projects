@@ -1,5 +1,5 @@
 from ngrams import Ngrams, print_menu, prompt
-from game_controller import run_typing_test_with_ngrams
+from typing_test import run_typing_test_with_ngrams
 
 
 def main():
@@ -230,6 +230,9 @@ def generate_phrases(n, phrases, difficulty):
     print(f"   • Difficulty level: {difficulty.capitalize()}")
     
     try:
+        import random
+        random.seed()
+        
         ngrams_obj = Ngrams(corpus_file=["corpora/corpora.pkl"], n=n, num_phrases=phrases, difficulty=difficulty)
         
         print("\n📝 Generating phrases...")
@@ -249,12 +252,13 @@ def generate_phrases(n, phrases, difficulty):
         print("=" * 50)
         print(f"✅ Successfully generated {len([p for p in test_phrases if p.strip()])} phrases")
         
-        # Show model statistics
         model_stats = ngrams_obj.get_model_stats()
         print(f"\n📊 Model Statistics:")
         print(f"   • Total tokens in corpus: {model_stats['total_tokens']}")
         print(f"   • Unique words: {model_stats['unique_words']}")
         print(f"   • Vocabulary size: {model_stats['vocabulary_size']}")
+        
+        ngrams_obj.clear_cache()
         
     except FileNotFoundError:
         print("❌ Error: corpora/corpora.pkl file not found!")

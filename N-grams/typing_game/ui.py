@@ -107,6 +107,7 @@ class OutlineButton:
         self.target_scale = 1.0
         self.hover_glow = 0.0
         self.click_flash = 0.0
+        self.glow_intensity = 0.0
 
     def _lighten(self, color: Tuple[int, int, int], amount: float) -> Tuple[int, int, int]:
         r, g, b = color
@@ -121,12 +122,18 @@ class OutlineButton:
         self.hovered = self.rect.collidepoint(mouse_pos)
         if self.hovered and not was_hovered:
             self.target_scale = 1.02
+            self.glow_intensity = 1.0
         elif not self.hovered and was_hovered:
             self.target_scale = 1.0
+            self.glow_intensity = 0.0
         self.scale += (self.target_scale - self.scale) * 0.15
         target_hover = 0.25 if self.hovered else 0.0
         self.hover_glow += (target_hover - self.hover_glow) * 0.12
         self.click_flash = max(0.0, self.click_flash - 0.06)
+        if self.hovered:
+            self.glow_intensity += (1.0 - self.glow_intensity) * 0.1
+        else:
+            self.glow_intensity += (0.0 - self.glow_intensity) * 0.1
 
     def draw(self, screen: pygame.Surface) -> None:
         scaled_width = int(self.rect.width * self.scale)
@@ -134,30 +141,48 @@ class OutlineButton:
         scaled_x = self.rect.centerx - scaled_width // 2
         scaled_y = self.rect.centery - scaled_height // 2
         scaled_rect = pygame.Rect(scaled_x, scaled_y, scaled_width, scaled_height)
-        total_glow = min(0.8, self.hover_glow + self.click_flash)
-        if total_glow > 0:
-            base_color = self._lighten(self.border_color, 0.6)
-            layers = 6
-            for i in range(layers):
-                inflate = 16 + i * 10
-                alpha = int(60 * total_glow * (1 - i / layers))
-                if alpha <= 0:
-                    continue
-                glow_rect = scaled_rect.inflate(inflate, inflate)
-                glow_surf = pygame.Surface((glow_rect.width, glow_rect.height), pygame.SRCALPHA)
-                br = max(8, 10 + i * 2)
-                pygame.draw.rect(glow_surf, (*base_color, alpha), glow_surf.get_rect(), border_radius=br)
-                screen.blit(glow_surf, glow_rect)
-        fill_color = self._lighten(self.border_color, 0.25)
-        pygame.draw.rect(screen, fill_color, scaled_rect, border_radius=12)
-        light_border = self._lighten(self.border_color, 0.25)
-        pygame.draw.rect(screen, light_border, scaled_rect, 3, border_radius=12)
-        inner_rect = scaled_rect.inflate(-6, -6)
-        inner_color = self._lighten(self.border_color, 0.45)
-        pygame.draw.rect(screen, inner_color, inner_rect, 1, border_radius=10)
+        
+        # Glass effect glow (same as ModernButton)
+        if self.glow_intensity > 0:
+            glow_rect = scaled_rect.inflate(20, 20)
+            glow_surf = pygame.Surface((glow_rect.width, glow_rect.height), pygame.SRCALPHA)
+            glow_alpha = int(50 * self.glow_intensity)
+            pygame.draw.rect(glow_surf, (*self.border_color, glow_alpha), glow_surf.get_rect(), border_radius=18)
+            screen.blit(glow_surf, glow_rect)
+        
+        # Shadow effect
+        shadow_rect = scaled_rect.copy()
+        shadow_rect.x += 6
+        shadow_rect.y += 6
+        shadow_surf = pygame.Surface((shadow_rect.width, shadow_rect.height), pygame.SRCALPHA)
+        pygame.draw.rect(shadow_surf, (*BLACK, 40), shadow_surf.get_rect(), border_radius=18)
+        screen.blit(shadow_surf, shadow_rect)
+        
+        # Gradient fill (glass effect)
+        gradient_surf = pygame.Surface((scaled_rect.width, scaled_rect.height), pygame.SRCALPHA)
+        for y in range(scaled_rect.height):
+            ratio = y / scaled_rect.height
+            r = int(self.border_color[0] * (1 - ratio * 0.3) + self._lighten(self.border_color, 0.3)[0] * (ratio * 0.3))
+            g = int(self.border_color[1] * (1 - ratio * 0.3) + self._lighten(self.border_color, 0.3)[1] * (ratio * 0.3))
+            b = int(self.border_color[2] * (1 - ratio * 0.3) + self._lighten(self.border_color, 0.3)[2] * (ratio * 0.3))
+            pygame.draw.line(gradient_surf, (r, g, b), (0, y), (scaled_rect.width, y))
+        screen.blit(gradient_surf, scaled_rect)
+        
+        # Border with glow intensity
+        border_color = tuple(min(255, c + int(20 * self.glow_intensity)) for c in self.border_color)
+        pygame.draw.rect(screen, border_color, scaled_rect, 2, border_radius=18)
+        
+        # Highlight effect (glass shine)
+        highlight_rect = scaled_rect.copy()
+        highlight_rect.height = highlight_rect.height // 2
+        highlight_surf = pygame.Surface((highlight_rect.width, highlight_rect.height), pygame.SRCALPHA)
+        pygame.draw.rect(highlight_surf, (*WHITE, 25), highlight_surf.get_rect(), border_radius=18)
+        screen.blit(highlight_surf, highlight_rect)
+        
+        # Text with shadow
         text_surface = self.font.render(self.text, True, PURE_WHITE)
         text_rect = text_surface.get_rect(center=scaled_rect.center)
-        shadow_surface = self.font.render(self.text, True, (*BLACK, 120))
+        shadow_surface = self.font.render(self.text, True, (*BLACK, 100))
         shadow_rect = shadow_surface.get_rect(center=(text_rect.centerx + 1, text_rect.centery + 1))
         screen.blit(shadow_surface, shadow_rect)
         screen.blit(text_surface, text_rect)

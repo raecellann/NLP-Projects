@@ -3,7 +3,7 @@ from typing_test import run_typing_test_with_ngrams
 
 
 def main():
-    print("🎯 N-Grams WPM")
+    print("N-Grams WPM")
     print("Generate text phrases using n-gram language models with difficulty levels!\n")
     
     while True:
@@ -44,10 +44,10 @@ def main():
             start_typing_test()
             continue
         elif choice == "8":
-            print("👋 Goodbye! Happy learning!")
+            print("Goodbye! Happy learning!")
             return
         else:
-            print("❌ Invalid choice, defaulting to Medium")
+            print("Invalid choice, defaulting to Medium")
             difficulty = "medium"
             n, phrases = 3, 8
         
@@ -71,30 +71,30 @@ def get_custom_settings():
         elif diff_choice == "3":
             difficulty = "hard"
         else:
-            print("❌ Invalid difficulty choice, defaulting to Medium")
+            print("Invalid difficulty choice, defaulting to Medium")
             difficulty = "medium"
         
         n_input = prompt("Enter n-gram order (2-5): ")
         n = int(n_input)
         if n < 2 or n > 5:
-            print("❌ N-gram order must be between 2 and 5")
+            print("N-gram order must be between 2 and 5")
             return None
             
         phrases_input = prompt("Enter number of phrases (3-15): ")
         phrases = int(phrases_input)
         if phrases < 3 or phrases > 15:
-            print("❌ Number of phrases must be between 3 and 15")
+            print("Number of phrases must be between 3 and 15")
             return None
             
         return n, phrases, difficulty
         
     except ValueError:
-        print("❌ Please enter valid numbers")
+        print("Please enter valid numbers")
         return None
 
 
 def show_difficulty_stats():
-    print("\n📊 DIFFICULTY STATISTICS (per mode)")
+    print("\n DIFFICULTY STATISTICS (per mode)")
     print("Analyzing each corpora section for word complexity...")
     try:
         for diff in ("easy", "medium", "hard"):
@@ -105,11 +105,11 @@ def show_difficulty_stats():
             print(f"Medium-like: {stats['medium']['count']} | Sample: {', '.join(stats['medium']['sample_words'])}")
             print(f"Hard-like:   {stats['hard']['count']} | Sample: {', '.join(stats['hard']['sample_words'])}")
     except Exception as e:
-        print(f"❌ Error getting difficulty statistics: {e}")
+        print(f" Error getting difficulty statistics: {e}")
 
 
 def verify_corpora_and_generation():
-    print("\n🔎 Verifying corpora sections and generation integrity...")
+    print("\n Verifying corpora sections and generation integrity...")
     import pickle
     import re
 
@@ -148,7 +148,7 @@ def verify_corpora_and_generation():
         hard_easy_overlap = hard_set & easy_set
         hard_med_overlap = hard_set & med_set
 
-        print(f"\n📚 Corpora sizes (unique, normalized):")
+        print(f"\n Corpora sizes (unique, normalized):")
         print(f"   • Easy:   {len(easy_set)}")
         print(f"   • Medium: {len(med_set)}")
         print(f"   • Hard:   {len(hard_set)}")
@@ -160,12 +160,12 @@ def verify_corpora_and_generation():
             else:
                 print(f"   • Overlap {name}: 0 ✅")
 
-        print("\n🔀 Overlaps (by normalized text):")
+        print("\n Overlaps (by normalized text):")
         show_overlap("Medium ∩ Easy", med_easy_overlap)
         show_overlap("Hard ∩ Easy", hard_easy_overlap)
         show_overlap("Hard ∩ Medium", hard_med_overlap)
 
-        print("\n🧪 Generation validation (words must belong to the selected section):")
+        print("\n Generation validation (words must belong to the selected section):")
         for diff, allowed_set in [("easy", easy_set), ("medium", med_set), ("hard", hard_set)]:
             try:
                 ngrams_obj = Ngrams(corpus_file=["corpora/corpora.pkl"], n=3, num_phrases=6, difficulty=diff)
@@ -176,13 +176,13 @@ def verify_corpora_and_generation():
                 outside = {w for w in used if w not in allowed_set}
                 if outside:
                     sample = ", ".join(list(outside)[:8])
-                    print(f"   • {diff.capitalize()}: ❌ {len(outside)} words outside section (e.g., {sample})")
+                    print(f"   • {diff.capitalize()}:  {len(outside)} words outside section (e.g., {sample})")
                 else:
-                    print(f"   • {diff.capitalize()}: ✅ all words within section")
+                    print(f"   • {diff.capitalize()}:  all words within section")
             except Exception as e:
                 print(f"   • {diff.capitalize()}: Error during generation: {e}")
     except Exception as e:
-        print(f"❌ Verification failed: {e}")
+        print(f" Verification failed: {e}")
 
 
 def start_typing_test():
@@ -199,7 +199,7 @@ def start_typing_test():
     elif time_choice == "3":
         time_limit = 120
     else:
-        print("❌ Invalid time choice, using 60 seconds")
+        print(" Invalid time choice, using 60 seconds")
         time_limit = 60
 
     print("\nChoose difficulty:")
@@ -214,17 +214,17 @@ def start_typing_test():
     elif diff_choice == "3":
         difficulty = "hard"
     else:
-        print("❌ Invalid difficulty choice, defaulting to Medium")
+        print(" Invalid difficulty choice, defaulting to Medium")
         difficulty = "medium"
 
     try:
         run_typing_test_with_ngrams(difficulty=difficulty, time_limit=time_limit)
     except Exception as e:
-        print(f"❌ Error running typing test: {e}")
+        print(f" Error running typing test: {e}")
 
 
 def generate_phrases(n, phrases, difficulty):
-    print(f"\n🎮 Generating {difficulty.capitalize()} difficulty phrases...")
+    print(f"\n Generating {difficulty.capitalize()} difficulty phrases...")
     print(f"   • N-gram order: {n}")
     print(f"   • Number of phrases: {phrases}")
     print(f"   • Difficulty level: {difficulty.capitalize()}")
@@ -235,25 +235,25 @@ def generate_phrases(n, phrases, difficulty):
         
         ngrams_obj = Ngrams(corpus_file=["corpora/corpora.pkl"], n=n, num_phrases=phrases, difficulty=difficulty)
         
-        print("\n📝 Generating phrases...")
+        print("\n Generating phrases...")
         test_phrases = ngrams_obj.generate_phrases()
         
         if not test_phrases or all(not phrase.strip() for phrase in test_phrases):
-            print("❌ Error: Could not generate valid phrases")
+            print(" Error: Could not generate valid phrases")
             print("The corpus might be too small for the selected n-gram order.")
             return
         
-        print(f"\n📋 Generated {difficulty.capitalize()} phrases:")
+        print(f"\n Generated {difficulty.capitalize()} phrases:")
         print("=" * 50)
         for i, phrase in enumerate(test_phrases, 1):
             if phrase.strip():
                 print(f"{i}. {phrase}")
         
         print("=" * 50)
-        print(f"✅ Successfully generated {len([p for p in test_phrases if p.strip()])} phrases")
+        print(f" Successfully generated {len([p for p in test_phrases if p.strip()])} phrases")
         
         model_stats = ngrams_obj.get_model_stats()
-        print(f"\n📊 Model Statistics:")
+        print(f"\n Model Statistics:")
         print(f"   • Total tokens in corpus: {model_stats['total_tokens']}")
         print(f"   • Unique words: {model_stats['unique_words']}")
         print(f"   • Vocabulary size: {model_stats['vocabulary_size']}")
@@ -261,10 +261,10 @@ def generate_phrases(n, phrases, difficulty):
         ngrams_obj.clear_cache()
         
     except FileNotFoundError:
-        print("❌ Error: corpora/corpora.pkl file not found!")
+        print(" Error: corpora/corpora.pkl file not found!")
         print("Please make sure the pickle corpus file exists in the 'corpora' directory.")
     except Exception as e:
-        print(f"❌ Error generating phrases: {e}")
+        print(f" Error generating phrases: {e}")
 
 
 if __name__ == "__main__":

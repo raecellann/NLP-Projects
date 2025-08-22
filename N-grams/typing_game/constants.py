@@ -1,6 +1,5 @@
 import pygame
 
-# Initialize Pygame modules that are safe to init early for constants usage
 try:
     if not pygame.get_init():
         pygame.init()
@@ -65,5 +64,4 @@ MENU = "menu"
 GAME = "game"
 RESULTS = "results"
 SETTINGS = "settings"
-
 

@@ -19,7 +19,7 @@ pip install pygame
 ```
 
 ### Quick Start
-- Run the interactive console menu (recommended):
+- Run the interactive console menu:
 ```bash
 python main.py
 ```
@@ -27,13 +27,6 @@ python main.py
 - Launch the typing game directly:
 ```bash
 python typing_test.py
-```
-
-- Or launch programmatically:
-```python
-from typing_test import run_typing_test_with_ngrams
-
-run_typing_test_with_ngrams(difficulty="medium", time_limit=60)
 ```
 
 ### Project Structure
@@ -46,8 +39,8 @@ N-grams/
     medium-texts.txt
     short-texts.txt
   multimedia/
-    bg.png                 # Menu background
-  typing_game/             # Refactored game modules (OOP)
+    bg.png                
+  typing_game/             
     __init__.py
     constants.py           # Sizes, colors, states
     particles.py           # Particle effect
@@ -58,20 +51,5 @@ N-grams/
   main.py                  # Console menu that can launch the GUI
   README.md
 ```
-
-### Notes on Refactor
-- The original large `typing_test.py` has been split into the `typing_game` package for clarity and maintainability.
-- `typing_test.py` remains as a thin entry point exposing `run_typing_test_with_ngrams(...)` for backward compatibility.
-
-### Corpora
-- The app expects `corpora/corpora.pkl` to exist. It can be a dictionary with keys like `easy`, `medium`, `hard` (case-insensitive, aliases supported). Each value can be a list of words/phrases or a multi-line string.
-
-### Troubleshooting
-- If Pygame fails to initialize sound, the game will still run (sound is optional).
-- On Windows, if you see a blank window, update graphics drivers and ensure `pip install pygame` succeeded.
-- If `corpora/corpora.pkl` is missing, phrase generation falls back gracefully but results may be limited.
-
-### License
-No license specified. Add one if you plan to distribute.
 
 

@@ -49,7 +49,7 @@ class TypingGame:
         self.current_width = MENU_WIDTH
         self.current_height = MENU_HEIGHT
         self.screen = pygame.display.set_mode((self.current_width, self.current_height))
-        pygame.display.set_caption("N-Gram Typing Challenge - Modern Edition")
+        pygame.display.set_caption("Grammytype - Test your skills here")
         self.clock = pygame.time.Clock()
         self.font_title = pygame.font.Font(None, 84)
         self.font_large = pygame.font.Font(None, 72)

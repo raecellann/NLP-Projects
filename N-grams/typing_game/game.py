@@ -538,6 +538,22 @@ class TypingGame:
         typed_chars = len(self.typing_text)
         if typed_chars > 0:
             self.accuracy = (self.correct_chars / typed_chars) * 100
+            
+            # Save progress data
+            try:
+                from progress_tracker.tracker import save_typing_result
+                save_typing_result(
+                    wpm=self.wpm,
+                    accuracy=self.accuracy,
+                    characters_typed=self.correct_chars,  # Correctly typed characters (matches display)
+                    total_characters=self.total_chars,    # Total available characters in test
+                    time_taken=self.elapsed_time,
+                    difficulty=self.difficulty.lower(),
+                    n_gram_order=self.n_gram,
+                    test_duration=self.time_limit
+                )
+            except Exception as e:
+                print(f"Could not save progress: {e}")
         else:
             self.accuracy = 0
         self.state = RESULTS

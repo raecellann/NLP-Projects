@@ -15,6 +15,8 @@ def main():
             "Show difficulty statistics",
             "Verify corpora & generation",
             "Start typing test (30/60/120s)",
+            "View Progress Dashboard",
+            "Quick Progress Summary",
             "Exit"
         ])
         
@@ -44,6 +46,12 @@ def main():
             start_typing_test()
             continue
         elif choice == "8":
+            show_progress_dashboard()
+            continue
+        elif choice == "9":
+            show_quick_progress_summary()
+            continue
+        elif choice == "10":
             print("Goodbye! Happy learning!")
             return
         else:
@@ -221,6 +229,39 @@ def start_typing_test():
         run_typing_test_with_ngrams(difficulty=difficulty, time_limit=time_limit)
     except Exception as e:
         print(f" Error running typing test: {e}")
+
+
+def show_progress_dashboard():
+    """Display the progress dashboard"""
+    try:
+        from progress_tracker.dashboard import ProgressDashboard
+        dashboard = ProgressDashboard()
+        dashboard.run_dashboard()
+    except ImportError:
+        print("Progress dashboard not available. Make sure progress_tracker package exists.")
+    except Exception as e:
+        print(f"Error loading progress dashboard: {e}")
+        print("You can still view basic progress with the quick summary option.")
+        
+        # Fallback to quick progress summary
+        try:
+            from progress_tracker.tracker import show_quick_progress
+            show_quick_progress()
+        except:
+            print("Progress tracking is not working. No data available.")
+
+
+def show_quick_progress_summary():
+    """Show a quick summary of typing progress"""
+    try:
+        from progress_tracker.tracker import show_quick_progress
+        show_quick_progress()
+        input("\nPress Enter to continue...")
+    except ImportError:
+        print("Progress tracking not available. Make sure progress_tracker package exists.")
+    except Exception as e:
+        print(f"Error loading progress: {e}")
+        input("\nPress Enter to continue...")
 
 
 def generate_phrases(n, phrases, difficulty):

@@ -1,12 +1,47 @@
 {
   "version": "1.0",
   "created_date": "2025-08-23",
-  "total_tests": 0,
-  "best_wpm": 0.0,
-  "best_accuracy": 0.0,
-  "average_wpm": 0.0,
-  "average_accuracy": 0.0,
-  "total_characters": 0,
-  "total_time": 0.0,
-  "test_history": []
+  "total_tests": 3,
+  "best_wpm": 64.8,
+  "best_accuracy": 94.4,
+  "average_wpm": 52.5,
+  "average_accuracy": 94.2,
+  "total_characters": 197,
+  "total_time": 45.0,
+  "test_history": [
+    {
+      "wpm": 38.4,
+      "accuracy": 94.1,
+      "characters_typed": 48,
+      "total_characters": 205,
+      "time_taken": 15.0,
+      "date_taken": "2025-08-23",
+      "difficulty": "easy",
+      "n_gram_order": 2,
+      "test_duration": 15
+    },
+    {
+      "wpm": 54.4,
+      "accuracy": 94.4,
+      "characters_typed": 68,
+      "total_characters": 413,
+      "time_taken": 15.0,
+      "date_taken": "2025-08-23",
+      "difficulty": "medium",
+      "n_gram_order": 3,
+      "test_duration": 15
+    },
+    {
+      "wpm": 64.8,
+      "accuracy": 94.2,
+      "characters_typed": 81,
+      "total_characters": 465,
+      "time_taken": 15.0,
+      "date_taken": "2025-08-23",
+      "difficulty": "medium",
+      "n_gram_order": 3,
+      "test_duration": 15
+    }
+  ],
+  "last_modified": "2025-08-23"
 }

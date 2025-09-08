@@ -25,3 +25,4 @@ def reset_progress():
 
 if __name__ == "__main__":
     reset_progress()
+

@@ -1,9 +1,25 @@
 import { loadDataset } from "./src/dataset.js";
 import { detectNews, detectNewsRules } from "./src/nlp.js";
 import { scrapeArticleText } from "./src/scrape.js";
+import { trainTfidfLogReg, predictWithTrained } from "./src/tfidf_logreg.js";
 
 (async () => {
   const args = process.argv.slice(2);
+  // --text-tfidf "raw text here" → use TF-IDF + Logistic Regression
+  const tfidfIdx = args.findIndex(a => a === "--text-tfidf");
+  if (tfidfIdx !== -1) {
+    const raw = args[tfidfIdx + 1] || "";
+    if (!raw) {
+      console.error("--text-tfidf requires a value, e.g. --text-tfidf \"Your article text...\"");
+      return;
+    }
+    const trained = await trainTfidfLogReg();
+    const pred = predictWithTrained(trained, raw);
+    console.log(`📝 Input: ${raw.slice(0, 120)}...`);
+    console.log(`➡️ Predicted (tfidf): ${pred.predictedCategory}`);
+    console.log({ prediction: pred, metrics: trained.metrics });
+    return;
+  }
   // --text "raw text here" → use rules directly
   const textFlagIndex = args.findIndex(a => a === "--text");
   if (textFlagIndex !== -1) {

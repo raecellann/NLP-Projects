@@ -65,5 +65,25 @@ export async function loadDataset() {
       .on("end", done);
   });
 
-  return data;
+  // Post-process: deduplicate by normalized text
+  const seen = new Set();
+  const deduped = [];
+  for (const item of data) {
+    const key = (item.text || "").toLowerCase().replace(/\s+/g, " ").trim();
+    if (!key) continue;
+    if (seen.has(key)) continue;
+    seen.add(key);
+    deduped.push(item);
+  }
+
+  // Optional: balance classes by downsampling to the minority count
+  if (process.env.BALANCE === "1") {
+    const real = deduped.filter(d => d.label === "real");
+    const fake = deduped.filter(d => d.label === "fake");
+    const minCount = Math.min(real.length, fake.length);
+    const take = (arr) => arr.sort(() => Math.random() - 0.5).slice(0, minCount);
+    return [...take(real), ...take(fake)].sort(() => Math.random() - 0.5);
+  }
+
+  return deduped;
 }

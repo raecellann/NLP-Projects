@@ -1,0 +1,156 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>GALIT AKO SA BISAYA</title>
+    <link rel="stylesheet" href="/styles.css" />
+  </head>
+  <body>
+    <div class="container">
+      <div class="header">
+        <h1 class="title">Fake News Detector</h1>
+        <p class="subtitle">Analyze article text or a URL. Choose Rules (fast) or Model (trained).</p>
+        <div class="badges">
+          <span class="badge info"><span class="dot"></span> Rules: no training needed</span>
+          <span class="badge success"><span class="dot"></span> Model: uses dataset</span>
+        </div>
+      </div>
+
+      <div class="grid">
+        <div class="card">
+          <h2>Analyze Text</h2>
+          <p class="helper">Paste article text. Select method then click Analyze.</p>
+          <form id="textForm">
+            <textarea id="textInput" rows="8" placeholder="Paste article text..."></textarea>
+            <div class="radios">
+              <label><input type="radio" name="method" value="rules" checked /> Rules</label>
+              <label><input type="radio" name="method" value="model" style="margin-left:8px;" /> Model</label>
+            </div>
+            <div class="row">
+              <div></div>
+              <button type="submit">Analyze Text</button>
+            </div>
+          </form>
+        </div>
+
+        <div class="card">
+          <h2>Analyze URL</h2>
+          <p class="helper">Enter a news article link. Fetch and analyze.</p>
+          <form id="urlForm">
+            <input id="urlInput" type="text" placeholder="https://example.com/article" />
+            <div class="radios">
+              <label><input type="radio" name="methodUrl" value="rules" checked /> Rules</label>
+              <label><input type="radio" name="methodUrl" value="model" style="margin-left:8px;" /> Model</label>
+            </div>
+            <div class="row">
+              <div></div>
+              <button class="secondary" type="submit">Analyze URL</button>
+            </div>
+          </form>
+        </div>
+      </div>
+
+      <div class="card" style="margin-top:16px;">
+        <h2>Result</h2>
+        <div id="result" class="result">No result yet.</div>
+      </div>
+    </div>
+
+    <script>
+      async function postJson(path, body) {
+        const res = await fetch(path, {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify(body)
+        });
+        if (!res.ok) {
+          const msg = await res.text().catch(()=>'');
+          throw new Error(msg || ('HTTP '+res.status));
+        }
+        return res.json();
+      }
+
+      const resultEl = document.getElementById('result');
+      function badge(colorClass, text) {
+        return `<span class="badge ${colorClass}"><span class="dot"></span>${text}</span>`;
+      }
+      function show(obj) {
+        if (!obj || typeof obj !== 'object') {
+          resultEl.textContent = String(obj);
+          return;
+        }
+        const isFake = obj.predictedCategory === 'fake';
+        const conf = (obj.rulesConfidence != null) ? Math.round(obj.rulesConfidence * 100) + '%' : undefined;
+        const flags = Array.isArray(obj.redFlags) ? obj.redFlags : [];
+        const sentiment = obj.sentiment || {};
+        const header = `Prediction: ${obj.predictedCategory || 'n/a'} ${conf ? `• Confidence: ${conf}` : ''}`;
+
+        let html = '';
+        html += `<div style="display:flex;gap:8px;align-items:center;margin-bottom:8px;">`;
+        html += badge(isFake ? 'danger' : 'success', obj.predictedCategory || 'unknown');
+        if (conf) html += badge('info', `confidence ${conf}`);
+        html += `</div>`;
+
+        if (obj.url) {
+          html += `<div class="section-title">URL</div>`;
+          html += `<div style="margin-bottom:8px;">${obj.url}</div>`;
+        }
+
+        if (flags.length) {
+          html += `<div class="section-title">Red Flags</div>`;
+          html += `<div class="badges">` + flags.map(f => badge('warn', f)).join('') + `</div>`;
+        }
+
+        if (obj.textPreview) {
+          html += `<div class="section-title">Preview</div>`;
+          html += `<div style="opacity:.9">${obj.textPreview}</div>`;
+        }
+
+        if (sentiment && (sentiment.compound != null)) {
+          html += `<div class="section-title">Sentiment</div>`;
+          html += `<div class="badges">
+            ${badge('info', `compound ${sentiment.compound}`)}
+            ${badge('info', `pos ${sentiment.pos}`)}
+            ${badge('info', `neu ${sentiment.neu}`)}
+            ${badge('info', `neg ${sentiment.neg}`)}
+          </div>`;
+        }
+
+        html += `<div class="section-title">Raw</div>`;
+        html += `<pre style="margin:0;white-space:pre-wrap;">${JSON.stringify(obj, null, 2)}</pre>`;
+        resultEl.innerHTML = html;
+      }
+
+      document.getElementById('textForm').addEventListener('submit', async (e) => {
+        e.preventDefault();
+        const text = document.getElementById('textInput').value.trim();
+        const method = document.querySelector('input[name="method"]:checked').value;
+        if (!text) { alert('Enter some text'); return; }
+        show({ loading: true });
+        try {
+          const data = await postJson('/api/analyze', { text, method });
+          show(data);
+        } catch (err) {
+          show({ error: err.message || String(err) });
+        }
+      });
+
+      document.getElementById('urlForm').addEventListener('submit', async (e) => {
+        e.preventDefault();
+        const url = document.getElementById('urlInput').value.trim();
+        const method = document.querySelector('input[name="methodUrl"]:checked').value;
+        if (!url) { alert('Enter a URL'); return; }
+        show({ loading: true });
+        try {
+          const data = await postJson('/api/analyze-url', { url, method });
+          show(data);
+        } catch (err) {
+          show({ error: err.message || String(err) });
+        }
+      });
+    </script>
+  </body>
+  </html>
+
+

@@ -7,7 +7,7 @@ export class DatasetRepository {
   constructor(options = {}) {
     const __filename = fileURLToPath(import.meta.url);
     const __dirname = path.dirname(__filename);
-    this.dataDir = options.dataDir || path.join(__dirname, "../data");
+    this.dataDir = options.dataDir || path.join(__dirname, "../../data");
     this.samplePerCsv = options.samplePerCsv;
   }
 

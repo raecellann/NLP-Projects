@@ -1,8 +1,6 @@
-node_modules/
-*.csv
+node_modules/.
 .DS_Store
 .env
 *.log
-src/data/*.csv
 
 

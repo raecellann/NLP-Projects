@@ -1,8 +1,0 @@
-node_modules/
-*.csv
-.DS_Store
-.env
-*.log
-src/data/*.csv
-
-

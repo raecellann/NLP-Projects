@@ -49,6 +49,35 @@
             </div>
           </form>
         </div>
+
+        <div class="card">
+          <h2>Analyze Image</h2>
+          <p class="helper">Upload an image with text. OCR will extract text and analyze.</p>
+          <form id="imageForm" enctype="multipart/form-data">
+            <div class="file-upload-container">
+              <input type="file" id="imageInput" accept="image/*" style="display: none;" />
+              <div class="file-upload-area" id="fileUploadArea">
+                <div class="upload-icon">📷</div>
+                <div class="upload-text">
+                  <span class="upload-main">Click to upload image</span>
+                  <span class="upload-sub">or drag and drop</span>
+                </div>
+              </div>
+              <div class="image-preview" id="imagePreview" style="display: none;">
+                <img id="previewImg" alt="Preview" />
+                <button type="button" id="removeImage" class="remove-btn">×</button>
+              </div>
+            </div>
+            <div class="radios">
+              <label><input type="radio" name="methodImage" value="rules" checked /> Rules</label>
+              <label><input type="radio" name="methodImage" value="model" style="margin-left:8px;" /> Model</label>
+            </div>
+            <div class="row">
+              <div></div>
+              <button class="tertiary" type="submit">Analyze Image</button>
+            </div>
+          </form>
+        </div>
       </div>
 
       <div class="card" style="margin-top:16px;">
@@ -95,6 +124,16 @@
         if (obj.url) {
           html += `<div class="section-title">URL</div>`;
           html += `<div style="margin-bottom:8px;">${obj.url}</div>`;
+        }
+
+        if (obj.imageName) {
+          html += `<div class="section-title">Image</div>`;
+          html += `<div style="margin-bottom:8px;">${obj.imageName}</div>`;
+        }
+
+        if (obj.extractedText) {
+          html += `<div class="section-title">Extracted Text</div>`;
+          html += `<div style="margin-bottom:8px;opacity:.9;max-height:200px;overflow-y:auto;background:#0b1021;padding:8px;border-radius:6px;border:1px solid var(--border);">${obj.extractedText}</div>`;
         }
 
         if (flags.length) {
@@ -144,6 +183,107 @@
         show({ loading: true });
         try {
           const data = await postJson('/api/analyze-url', { url, method });
+          show(data);
+        } catch (err) {
+          show({ error: err.message || String(err) });
+        }
+      });
+
+      // Image upload functionality
+      const imageInput = document.getElementById('imageInput');
+      const fileUploadArea = document.getElementById('fileUploadArea');
+      const imagePreview = document.getElementById('imagePreview');
+      const previewImg = document.getElementById('previewImg');
+      const removeImageBtn = document.getElementById('removeImage');
+
+      // Click to upload
+      fileUploadArea.addEventListener('click', () => {
+        imageInput.click();
+      });
+
+      // Drag and drop functionality
+      fileUploadArea.addEventListener('dragover', (e) => {
+        e.preventDefault();
+        fileUploadArea.classList.add('dragover');
+      });
+
+      fileUploadArea.addEventListener('dragleave', () => {
+        fileUploadArea.classList.remove('dragover');
+      });
+
+      fileUploadArea.addEventListener('drop', (e) => {
+        e.preventDefault();
+        fileUploadArea.classList.remove('dragover');
+        const files = e.dataTransfer.files;
+        if (files.length > 0 && files[0].type.startsWith('image/')) {
+          handleImageFile(files[0]);
+        }
+      });
+
+      // File input change
+      imageInput.addEventListener('change', (e) => {
+        if (e.target.files.length > 0) {
+          handleImageFile(e.target.files[0]);
+        }
+      });
+
+      // Remove image
+      removeImageBtn.addEventListener('click', (e) => {
+        e.stopPropagation();
+        clearImage();
+      });
+
+      function handleImageFile(file) {
+        if (!file.type.startsWith('image/')) {
+          alert('Please select an image file');
+          return;
+        }
+
+        const reader = new FileReader();
+        reader.onload = (e) => {
+          previewImg.src = e.target.result;
+          fileUploadArea.style.display = 'none';
+          imagePreview.style.display = 'block';
+        };
+        reader.readAsDataURL(file);
+      }
+
+      function clearImage() {
+        imageInput.value = '';
+        fileUploadArea.style.display = 'block';
+        imagePreview.style.display = 'none';
+        previewImg.src = '';
+      }
+
+      // Image form submission
+      document.getElementById('imageForm').addEventListener('submit', async (e) => {
+        e.preventDefault();
+        const file = imageInput.files[0];
+        const method = document.querySelector('input[name="methodImage"]:checked').value;
+        
+        if (!file) {
+          alert('Please select an image file');
+          return;
+        }
+
+        show({ loading: true });
+        
+        try {
+          const formData = new FormData();
+          formData.append('image', file);
+          formData.append('method', method);
+
+          const response = await fetch('/api/analyze-image', {
+            method: 'POST',
+            body: formData
+          });
+
+          if (!response.ok) {
+            const errorText = await response.text().catch(() => '');
+            throw new Error(errorText || `HTTP ${response.status}`);
+          }
+
+          const data = await response.json();
           show(data);
         } catch (err) {
           show({ error: err.message || String(err) });

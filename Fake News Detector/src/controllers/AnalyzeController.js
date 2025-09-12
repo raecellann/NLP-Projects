@@ -1,3 +1,5 @@
+import Tesseract from 'tesseract.js';
+
 export class AnalyzeController {
   constructor(services) {
     this.nlp = services.nlp;
@@ -28,6 +30,43 @@ export class AnalyzeController {
       const useModel = method === "model";
       const result = useModel ? this.nlp.analyzeWithModel(text) : this.nlp.analyzeWithRules(text);
       res.json({ url, textPreview: text.slice(0, 400), ...result });
+    } catch (e) {
+      res.status(500).json({ error: e && e.message ? e.message : String(e) });
+    }
+  }
+
+  analyzeImage = async (req, res) => {
+    try {
+      const { method } = req.body || {};
+      const file = req.file;
+      
+      if (!file) {
+        return res.status(400).json({ error: "image file is required" });
+      }
+
+      // Extract text from image using OCR
+      const { data: { text } } = await Tesseract.recognize(
+        file.buffer,
+        'eng',
+        {
+          logger: m => console.log(m) // Optional: log OCR progress
+        }
+      );
+
+      if (!text || text.trim().length === 0) {
+        return res.status(400).json({ error: "No text could be extracted from the image" });
+      }
+
+      // Analyze the extracted text using existing logic
+      const useModel = method === "model";
+      const result = useModel ? this.nlp.analyzeWithModel(text) : this.nlp.analyzeWithRules(text);
+      
+      res.json({ 
+        imageName: file.originalname,
+        extractedText: text,
+        textPreview: text.slice(0, 400),
+        ...result 
+      });
     } catch (e) {
       res.status(500).json({ error: e && e.message ? e.message : String(e) });
     }

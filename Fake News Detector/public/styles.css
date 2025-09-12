@@ -39,6 +39,7 @@ body {
 
 .grid { display: grid; grid-template-columns: 1fr; gap: 16px; margin-top: 18px; }
 @media (min-width: 900px) { .grid { grid-template-columns: 1fr 1fr; } }
+@media (min-width: 1200px) { .grid { grid-template-columns: 1fr 1fr 1fr; } }
 
 .card {
   border: 1px solid var(--border);
@@ -85,6 +86,10 @@ button.secondary {
   background: linear-gradient(180deg, #60a5fa, #3b82f6);
   box-shadow: 0 10px 25px rgba(59,130,246,0.30);
 }
+button.tertiary {
+  background: linear-gradient(180deg, #a78bfa, #8b5cf6);
+  box-shadow: 0 10px 25px rgba(139,92,246,0.30);
+}
 button:active { transform: translateY(1px); }
 
 .result {
@@ -105,4 +110,92 @@ button:active { transform: translateY(1px); }
 .badge.danger .dot { background: var(--danger); }
 
 .section-title { margin: 6px 0; font-size: 14px; color: var(--muted); text-transform: uppercase; letter-spacing: 0.08em; }
+
+/* File Upload Styles */
+.file-upload-container {
+  position: relative;
+  margin-bottom: 10px;
+}
+
+.file-upload-area {
+  border: 2px dashed var(--border);
+  border-radius: 10px;
+  padding: 20px;
+  text-align: center;
+  cursor: pointer;
+  transition: all 0.3s ease;
+  background: #0b1021;
+}
+
+.file-upload-area:hover {
+  border-color: #334155;
+  background: rgba(59,130,246,0.1);
+}
+
+.file-upload-area.dragover {
+  border-color: var(--accent-2);
+  background: rgba(59,130,246,0.2);
+}
+
+.upload-icon {
+  font-size: 32px;
+  margin-bottom: 8px;
+  opacity: 0.7;
+}
+
+.upload-text {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+}
+
+.upload-main {
+  font-size: 14px;
+  font-weight: 600;
+  color: var(--text);
+}
+
+.upload-sub {
+  font-size: 12px;
+  color: var(--muted);
+}
+
+.image-preview {
+  position: relative;
+  border-radius: 10px;
+  overflow: hidden;
+  border: 1px solid var(--border);
+  background: #0b1021;
+}
+
+.image-preview img {
+  width: 100%;
+  height: auto;
+  max-height: 200px;
+  object-fit: contain;
+  display: block;
+}
+
+.remove-btn {
+  position: absolute;
+  top: 8px;
+  right: 8px;
+  width: 24px;
+  height: 24px;
+  border-radius: 50%;
+  border: none;
+  background: rgba(239,68,68,0.9);
+  color: white;
+  font-size: 16px;
+  font-weight: bold;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  transition: background 0.2s ease;
+}
+
+.remove-btn:hover {
+  background: rgba(239,68,68,1);
+}
 

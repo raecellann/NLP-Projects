@@ -126,6 +126,28 @@
           html += `<div style="margin-bottom:8px;">${obj.url}</div>`;
         }
 
+        if (obj.title) {
+          html += `<div class="section-title">Article Title</div>`;
+          html += `<div style="margin-bottom:8px;font-weight:500;">${obj.title}</div>`;
+        }
+
+        if (obj.author || obj.publisher) {
+          html += `<div class="section-title">Source Information</div>`;
+          html += `<div style="margin-bottom:8px;">`;
+          if (obj.author) {
+            html += `<div><strong>Author:</strong> ${obj.author}</div>`;
+          }
+          if (obj.publisher) {
+            html += `<div><strong>Publisher:</strong> ${obj.publisher}</div>`;
+          }
+          html += `</div>`;
+        }
+
+        if (obj.description) {
+          html += `<div class="section-title">Description</div>`;
+          html += `<div style="margin-bottom:8px;opacity:.9;">${obj.description}</div>`;
+        }
+
         if (obj.imageName) {
           html += `<div class="section-title">Image</div>`;
           html += `<div style="margin-bottom:8px;">${obj.imageName}</div>`;

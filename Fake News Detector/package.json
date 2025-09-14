@@ -16,10 +16,7 @@
         "vader-sentiment": "^1.1.3"
     },
     "scripts": {
-        "start": "cross-env LOG_RESULTS=1 LOG_RESULTS_JSON=1 node src/server.js",
-        "dev": "cross-env LOG_RESULTS=1 LOG_RESULTS_JSON=1 node src/server.js"
-    },
-    "devDependencies": {
-        "cross-env": "^10.0.0"
+        "start": "node src/server.js",
+        "dev": "node src/server.js"
     }
 }

@@ -7,7 +7,6 @@ import { NlpService } from "./services/NlpService.js";
 import { ScraperService } from "./services/ScraperService.js";
 import { DatasetRepository } from "./repositories/DatasetRepository.js";
 import { AnalyzeController } from "./controllers/AnalyzeController.js";
-import { ResultLogger } from "./services/ResultLogger.js";
 import { createAnalyzeRouter } from "./routes/analyzeRoutes.js";
 
 const app = express();
@@ -39,11 +38,7 @@ const datasetRepo = new DatasetRepository({ samplePerCsv: process.env.SAMPLE_PER
 const nlp = new NlpService();
 await nlp.initialize(() => datasetRepo.loadAll());
 const scraper = new ScraperService();
-const analyzeController = new AnalyzeController({ 
-  nlp, 
-  scraper, 
-  resultLogger: process.env.LOG_RESULTS === "1" ? new ResultLogger() : null 
-});
+const analyzeController = new AnalyzeController({ nlp, scraper });
 app.use("/api", createAnalyzeRouter(analyzeController, upload));
 
 // Serve static UI

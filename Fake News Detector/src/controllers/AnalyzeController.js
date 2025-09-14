@@ -1,11 +1,9 @@
 import Tesseract from 'tesseract.js';
-import { ResultLogger } from "../services/ResultLogger.js";
 
 export class AnalyzeController {
   constructor(services) {
     this.nlp = services.nlp;
     this.scraper = services.scraper;
-    this.resultLogger = process.env.LOG_RESULTS === "1" ? (services.resultLogger || new ResultLogger()) : null;
   }
 
   analyzeText = async (req, res) => {
@@ -16,9 +14,6 @@ export class AnalyzeController {
       }
       const useModel = method === "model";
       const result = useModel ? this.nlp.analyzeWithModel(text) : this.nlp.analyzeWithRules(text);
-      if (this.resultLogger) {
-        this.resultLogger.append({ kind: "text", method: useModel ? "model" : "rules", inputChars: text.length, result });
-      }
       res.json(result);
     } catch (e) {
       res.status(500).json({ error: e && e.message ? e.message : String(e) });
@@ -31,13 +26,19 @@ export class AnalyzeController {
       if (!url || typeof url !== "string") {
         return res.status(400).json({ error: "url is required" });
       }
-      const text = await this.scraper.scrapeArticleText(url);
+      const scrapedData = await this.scraper.scrapeArticleText(url);
+      const { text, metadata } = scrapedData;
       const useModel = method === "model";
-      const result = useModel ? this.nlp.analyzeWithModel(text) : this.nlp.analyzeWithRules(text);
-      if (this.resultLogger) {
-        this.resultLogger.append({ kind: "url", method: useModel ? "model" : "rules", url, inputChars: text.length, result });
-      }
-      res.json({ url, textPreview: text.slice(0, 400), ...result });
+      const result = useModel ? this.nlp.analyzeWithModel(text) : this.nlp.analyzeWithRules(text, metadata);
+      res.json({ 
+        url, 
+        textPreview: text.slice(0, 400), 
+        author: metadata.author,
+        publisher: metadata.publisher,
+        title: metadata.title,
+        description: metadata.description,
+        ...result 
+      });
     } catch (e) {
       res.status(500).json({ error: e && e.message ? e.message : String(e) });
     }
@@ -68,9 +69,7 @@ export class AnalyzeController {
       // Analyze the extracted text using existing logic
       const useModel = method === "model";
       const result = useModel ? this.nlp.analyzeWithModel(text) : this.nlp.analyzeWithRules(text);
-      if (this.resultLogger) {
-        this.resultLogger.append({ kind: "image", method: useModel ? "model" : "rules", imageName: file.originalname, inputChars: text.length, result });
-      }
+      
       res.json({ 
         imageName: file.originalname,
         extractedText: text,

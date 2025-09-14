@@ -1,6 +1,6 @@
 # 🔍 Fake News Detector
 
-A powerful web application that detects fake news using Natural Language Processing (NLP) and Machine Learning techniques. The system can analyze text from multiple sources including direct text input, URLs, and images using OCR technology.
+A web application that detects fake news using Natural Language Processing (NLP) and Machine Learning techniques. The system can analyze text from multiple sources including direct text input, URLs, and images using OCR technology.
 
 ## ✨ Features
 
@@ -12,8 +12,6 @@ A powerful web application that detects fake news using Natural Language Process
   - **Model-based**: Machine learning model trained on news datasets
 - **📊 Detailed Results**: Confidence scores, red flags, sentiment analysis, and more
 - **🎨 Modern UI**: Beautiful, responsive interface with dark theme
-
-## 🚀 Quick Start
 
 ### Prerequisites
 
@@ -35,7 +33,7 @@ A powerful web application that detects fake news using Natural Language Process
 
 3. **Start the application**
    ```bash
-   npm start
+   npm start or npm run dev
    ```
 
 4. **Open your browser**
@@ -127,9 +125,6 @@ fake-news-detector/
 └── README.md
 ```
 
-## 🔍 How It Works
-
-For detailed technical information about the detection algorithms, data pipeline, and system architecture, see [TECHNICAL_DOCS.md](TECHNICAL_DOCS.md).
 
 ## 🚨 Limitations
 
@@ -138,19 +133,11 @@ For detailed technical information about the detection algorithms, data pipeline
 - **Context**: May not understand complex contextual nuances
 - **Training Data**: Model accuracy depends on training dataset quality
 
-## 🤝 Contributing
-
-1. Fork the repository
-2. Create a feature branch
-3. Make your changes
-4. Test thoroughly
-5. Submit a pull request
-
 ## 📄 License
 
 This project is open source and available under the [MIT License](LICENSE).
 
-## 🙏 Acknowledgments
+## 🙏 References
 
 - Natural.js for NLP capabilities
 - Tesseract.js for OCR functionality
@@ -158,6 +145,3 @@ This project is open source and available under the [MIT License](LICENSE).
 - All contributors and the open-source community
 
 ---
-
-**⚠️ Disclaimer**: This tool is for educational and research purposes. Always verify information through multiple reliable sources before making important decisions.
-

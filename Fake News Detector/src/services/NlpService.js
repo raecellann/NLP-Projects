@@ -81,7 +81,6 @@ export class NlpService {
       }
     }
 
-    // Apply optional SAMPLE_SIZE cap in a label-aware way (split budget across labels)
     const sampleEnv = process.env.SAMPLE_SIZE;
     const sampleSize = sampleEnv ? parseInt(sampleEnv, 10) : NaN;
     if (!Number.isNaN(sampleSize) && sampleSize > 0 && sampleSize < working.length) {
@@ -94,7 +93,6 @@ export class NlpService {
       working = labels.flatMap(l => byLabel[l].slice(0, perLabel));
     }
 
-    // Stratified split per label (80/20) to avoid skew
     const byLabelForSplit = working.reduce((acc, item) => {
       (acc[item.label] = acc[item.label] || []).push(item);
       return acc;
@@ -174,7 +172,7 @@ export class NlpService {
     return { text, tokens: doc, predictedCategory: category, scores, sentiment, training: this.trainingSummary.metrics };
   }
 
-  analyzeWithRules(text) {
+  analyzeWithRules(text, metadata = {}) {
     const reasons = [];
     const lower = text.toLowerCase();
     const urgency = ["urgent", "immediately", "asap", "important", "help", "deadline"];
@@ -194,7 +192,46 @@ export class NlpService {
     const words = text.split(/\s+/).filter(Boolean);
     const allCapsWords = words.filter(w => /[A-Z]{3,}/.test(w) && !/^[A-Z]{1}[a-z]+$/.test(w));
     if (allCapsWords.length >= 3) reasons.push("many ALL-CAPS words");
-    const score = Math.min(1, reasons.length * 0.2);
+
+    // Author/Publisher credibility checks
+    if (metadata.author) {
+      const authorLower = metadata.author.toLowerCase();
+      const suspiciousAuthors = ["anonymous", "unknown", "staff", "editor", "admin"];
+      if (suspiciousAuthors.some(s => authorLower.includes(s))) {
+        reasons.push("suspicious author name");
+      }
+    }
+
+    if (metadata.publisher) {
+      const publisherLower = metadata.publisher.toLowerCase();
+      const suspiciousPublishers = ["blog", "wordpress", "tumblr", "medium", "unknown"];
+      if (suspiciousPublishers.some(s => publisherLower.includes(s))) {
+        reasons.push("unverified publisher");
+      }
+      
+      // Check for known credible sources
+      const credibleSources = ["bbc", "cnn", "reuters", "ap", "associated press", "new york times", "washington post", "wall street journal"];
+      if (credibleSources.some(s => publisherLower.includes(s))) {
+        // Reduce fake score for credible sources
+        reasons.push("credible source");
+      }
+    }
+
+    // No author/publisher is suspicious
+    if (!metadata.author && !metadata.publisher) {
+      reasons.push("no author/publisher information");
+    }
+
+    let score = Math.min(1, reasons.length * 0.2);
+    
+    // Adjust score based on credibility
+    if (reasons.includes("credible source")) {
+      score = Math.max(0, score - 0.3); // Reduce fake probability for credible sources
+    }
+    if (reasons.includes("no author/publisher information")) {
+      score = Math.min(1, score + 0.2); // Increase fake probability for missing info
+    }
+
     const predictedCategory = score >= 0.5 ? "fake" : "real";
     const sentiment = vader.SentimentIntensityAnalyzer.polarity_scores(text);
     return { text, predictedCategory, rulesConfidence: score, redFlags: reasons, sentiment };

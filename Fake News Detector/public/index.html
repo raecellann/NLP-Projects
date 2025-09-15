@@ -126,9 +126,22 @@
           html += `<div style="margin-bottom:8px;">${obj.url}</div>`;
         }
 
+        if (obj.image || obj.imageName) {
+          html += `<div class="section-title">Image</div>`;
+          const imgSrc = obj.image || obj.imageName;
+          html += `<div style="margin-bottom:8px;">`;
+          html += `<img src="${imgSrc}" alt="Article Image" style="max-width:300px;max-height:200px;border-radius:6px;border:1px solid var(--border);background:#222;" />`;
+          html += `</div>`;
+        }
+
         if (obj.title) {
           html += `<div class="section-title">Article Title</div>`;
           html += `<div style="margin-bottom:8px;font-weight:500;">${obj.title}</div>`;
+        }
+
+        if (obj.datePublished) {
+          html += `<div class="section-title">Date of Publication</div>`;
+          html += `<div style="margin-bottom:8px;">${obj.datePublished}</div>`;
         }
 
         if (obj.author || obj.publisher) {
@@ -146,11 +159,6 @@
         if (obj.description) {
           html += `<div class="section-title">Description</div>`;
           html += `<div style="margin-bottom:8px;opacity:.9;">${obj.description}</div>`;
-        }
-
-        if (obj.imageName) {
-          html += `<div class="section-title">Image</div>`;
-          html += `<div style="margin-bottom:8px;">${obj.imageName}</div>`;
         }
 
         if (obj.extractedText) {

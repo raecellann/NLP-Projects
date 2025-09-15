@@ -137,7 +137,7 @@ fake-news-detector/
 
 This project is open source and available under the [MIT License](LICENSE).
 
-## 🙏 References
+## 📝 References
 
 - Natural.js for NLP capabilities
 - Tesseract.js for OCR functionality

@@ -34,7 +34,64 @@ export class ScraperService {
 
   #extractMetadata(html) {
     const $ = load(html);
-    const metadata = { author: null, publisher: null, title: null, description: null };
+    const metadata = { author: null, publisher: null, title: null, description: null, image: null, datePublished: null };
+
+    // Try meta tags first
+    const metaImageSelectors = [
+      'meta[property="og:image"]',
+      'meta[name="twitter:image"]',
+      'meta[itemprop="image"]',
+      'meta[name="image"]'
+    ];
+    for (const selector of metaImageSelectors) {
+      const element = $(selector);
+      if (element.length) {
+        const img = element.attr("content");
+        if (img && img.trim()) {
+          metadata.image = img.trim();
+          break;
+        }
+      }
+    }
+    // If no meta image, try first <img> in main/article
+    if (!metadata.image) {
+      let imgEl = $("article img[src]").first();
+      if (!imgEl.length) imgEl = $("main img[src]").first();
+      if (!imgEl.length) imgEl = $("img[src]").first();
+      if (imgEl.length) {
+        let imgSrc = imgEl.attr("src");
+        if (imgSrc && imgSrc.trim()) {
+          // If relative URL, try to resolve to absolute (best effort)
+          if (/^\/[^\/]/.test(imgSrc)) {
+            // Starts with single slash, likely relative
+            const base = $("base").attr("href") || "";
+            imgSrc = base ? base + imgSrc : imgSrc;
+          }
+          metadata.image = imgSrc.trim();
+        }
+      }
+    }
+
+    // Date selectors
+    const dateSelectors = [
+      'meta[property="article:published_time"]',
+      'meta[name="date"]',
+      'meta[itemprop="datePublished"]',
+      'meta[name="pubdate"]',
+      'meta[name="publish-date"]',
+      'meta[name="DC.date.issued"]',
+      'time[datetime]'
+    ];
+    for (const selector of dateSelectors) {
+      const element = $(selector);
+      if (element.length) {
+        const date = element.attr("content") || element.attr("datetime") || element.text();
+        if (date && date.trim()) {
+          metadata.datePublished = date.trim();
+          break;
+        }
+      }
+    }
 
     const authorSelectors = [
       'meta[name="author"]',
@@ -66,8 +123,7 @@ export class ScraperService {
       'meta[property="article:publisher"]',
       ".site-name",
       ".publisher",
-      ".brand",
-      "title",
+      ".brand"
     ];
 
     for (const selector of publisherSelectors) {
@@ -75,12 +131,17 @@ export class ScraperService {
       if (element.length) {
         let publisher = element.attr("content") || element.text();
         if (publisher && publisher.trim()) {
-          if (selector === "title") {
-            publisher = publisher.split(" - ")[0].split(" | ")[0].trim();
-          }
           metadata.publisher = this.#cleanText(publisher);
           break;
         }
+      }
+    }
+
+    // Special handling for NYTimes and similar sites
+    if (!metadata.publisher) {
+      const ogSiteName = $('meta[property="og:site_name"]').attr('content');
+      if (ogSiteName && ogSiteName.trim()) {
+        metadata.publisher = this.#cleanText(ogSiteName);
       }
     }
 
@@ -136,6 +197,12 @@ export class ScraperService {
             if (node.description && !metadata.description) {
               metadata.description = this.#cleanText(node.description);
             }
+            if (node.image && !metadata.image) {
+              metadata.image = typeof node.image === 'string' ? node.image : (Array.isArray(node.image) ? node.image[0] : null);
+            }
+            if (node.datePublished && !metadata.datePublished) {
+              metadata.datePublished = node.datePublished;
+            }
           }
         }
       } catch {}
@@ -178,7 +245,6 @@ export class ScraperService {
 
     let lastError = null;
 
-    // Try direct HTTP fetch first
     try {
       console.log("[DEBUG] Trying direct HTTP fetch...");
       const { data } = await this.#tryFetch(url);
@@ -197,7 +263,6 @@ export class ScraperService {
       lastError = error;
     }
 
-    // Try Playwright as fallback
     try {
       console.log("[DEBUG] Trying Playwright as fallback...");
       const result = await this.scrapeArticleTextPlaywright(url);
@@ -227,9 +292,8 @@ export class ScraperService {
       });
 
       const page = await context.newPage();
-      await page.goto(url, { timeout: 60000, waitUntil: "domcontentloaded" }); // Increased timeout
+      await page.goto(url, { timeout: 60000, waitUntil: "domcontentloaded" }); 
 
-      // Wait for possible content selectors
       const selectors = [
         "article",
         ".td-post-content",
@@ -252,12 +316,12 @@ export class ScraperService {
       if (!found) {
         console.log("[DEBUG] No main content selector found, dumping HTML for inspection...");
         const html = await page.content();
-        console.log(html.slice(0, 1000)); // Print first 1000 chars for debugging
+        console.log(html.slice(0, 1000)); 
         throw new Error("No main content selector found");
       }
 
       await page.evaluate(() => window.scrollTo(0, document.body.scrollHeight));
-      await page.waitForTimeout(2000); // Wait for lazy-loaded content
+      await page.waitForTimeout(2000); 
 
       const html = await page.content();
       const text = this.#extractTextFromHtml(html);

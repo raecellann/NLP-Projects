@@ -37,6 +37,8 @@ export class AnalyzeController {
         publisher: metadata.publisher,
         title: metadata.title,
         description: metadata.description,
+        image: metadata.image,
+        datePublished: metadata.datePublished,
         ...result 
       });
     } catch (e) {

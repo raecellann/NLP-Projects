@@ -144,4 +144,13 @@ This project is open source and available under the [MIT License](LICENSE).
 - VADER Sentiment for sentiment analysis
 - All contributors and the open-source community
 
+## Websites That supports this Application
+- New York Times
+- PhilStar
+- Manila Times
+- The Onion (Fake)
+- Rappler 
+- CNN 
+- Inquirer 
+- Manila Bulletin
 ---

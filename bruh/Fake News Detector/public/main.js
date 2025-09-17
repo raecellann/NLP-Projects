@@ -31,6 +31,20 @@ function show(obj) {
   if (conf) html += badge('info', `confidence ${conf}`);
   html += `</div>`;
 
+  // Probabilities (blended)
+  if (obj.probabilities && (obj.probabilities.fake != null)) {
+    const p = obj.probabilities;
+    const fmt = (x) => (Math.round(x * 1000) / 10).toFixed(1) + '%';
+    html += `<div class="section-title">Probabilities</div>`;
+    html += `<div class="badges">
+      ${badge('danger', `fake ${fmt(p.fake)}`)}
+      ${badge('success', `real ${fmt(p.real)}`)}
+      ${badge('info', `from model ${fmt(p.fromClassifier || 0)}`)}
+      ${badge('warn', `from rules ${fmt(p.fromRules || 0)}`)}
+    </div>`;
+    html += `<div style="margin:6px 0 0; font-size:12px; color: var(--muted);">fake = 0.75 × model + 0.25 × rules</div>`;
+  }
+
   if (obj.url) {
     html += `<div class="section-title">URL</div>`;
     html += `<div style="margin-bottom:8px;">${obj.url}</div>`;
@@ -91,6 +105,24 @@ function show(obj) {
       ${badge('info', `neu ${sentiment.neu}`)}
       ${badge('info', `neg ${sentiment.neg}`)}
     </div>`;
+  }
+
+  // Rules signals (top contributors)
+  if (obj.rules && obj.rules.signals) {
+    const entries = Object.entries(obj.rules.signals)
+      .map(([k, v]) => ({ k, v }))
+      .filter(x => typeof x.v === 'number' && x.v > 0.01)
+      .sort((a, b) => b.v - a.v)
+      .slice(0, 5);
+    if (entries.length) {
+      html += `<div class="section-title">Rules Signals</div>`;
+      html += `<div class="badges">`;
+      for (const { k, v } of entries) {
+        const label = `${k.replace(/([A-Z])/g, ' $1').toLowerCase().trim()} ${Math.round(v * 100)}%`;
+        html += badge('warn', label);
+      }
+      html += `</div>`;
+    }
   }
 
   // Raw JSON removed from UI

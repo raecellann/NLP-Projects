@@ -20,6 +20,61 @@ export class NlpService {
     this.trainingSummary = { trained: false, metrics: {} };
   }
 
+  /**
+   * Lightweight rules-based fake score in [0,1]. Higher means more likely fake.
+   */
+  scoreWithRules(text) {
+    if (!text || typeof text !== "string") return { scoreFake: 0, signals: {} };
+    const original = text;
+    const lower = original.toLowerCase();
+
+    const signals = {};
+
+    // Exclamation marks density
+    const exclamations = (original.match(/!/g) || []).length;
+    const lengthSafe = Math.max(1, original.length);
+    signals.exclamationDensity = Math.min(1, exclamations / 20);
+
+    // ALL-CAPS words ratio (>= 3 chars)
+    const words = original.split(/[^A-Za-z]+/).filter(Boolean);
+    const capsWords = words.filter(w => w.length >= 3 && /^[A-Z]+$/.test(w));
+    signals.allCapsRatio = words.length ? Math.min(1, capsWords.length / words.length) : 0;
+
+    // Urgency / sensational keywords
+    const urgency = [
+      "urgent", "shocking", "breaking", "must see", "must-read", "alert", "immediately",
+      "exposed", "explosive", "unbelievable", "you won't believe", "secret", "leaked"
+    ];
+    const urgencyHits = urgency.reduce((acc, k) => acc + (lower.includes(k) ? 1 : 0), 0);
+    signals.urgencyFlag = Math.min(1, urgencyHits / 4);
+
+    // Money / transfer keywords
+    const money = ["wire", "bitcoin", "crypto", "transfer", "send money", "bank details", "prize", "lottery"];
+    const moneyHits = money.reduce((acc, k) => acc + (lower.includes(k) ? 1 : 0), 0);
+    signals.moneyFlag = Math.min(1, moneyHits / 3);
+
+    // Link density
+    const links = (original.match(/https?:\/\/|www\./gi) || []).length;
+    signals.linkDensity = Math.min(1, links / 5);
+
+    // Questionable source phrases
+    const phrases = ["forward this", "share quickly", "what the media won't tell you", "media won't cover"];
+    const phraseHits = phrases.reduce((acc, k) => acc + (lower.includes(k) ? 1 : 0), 0);
+    signals.conspiracyFlag = Math.min(1, phraseHits / 2);
+
+    // Combine with conservative weights (sum of weighted features, capped to 1)
+    const weighted =
+      0.20 * signals.exclamationDensity +
+      0.20 * signals.allCapsRatio +
+      0.25 * signals.urgencyFlag +
+      0.15 * signals.moneyFlag +
+      0.10 * signals.linkDensity +
+      0.10 * signals.conspiracyFlag;
+
+    const scoreFake = Math.max(0, Math.min(1, weighted));
+    return { scoreFake, signals };
+  }
+
   preprocess(text) {
     const lower = text.toLowerCase();
     const tokens = this.tokenizer.tokenize(lower);
@@ -225,6 +280,36 @@ export class NlpService {
     }
     const sentiment = vader.SentimentIntensityAnalyzer.polarity_scores(text);
     return { text, tokens: doc, predictedCategory: category, scores, sentiment, training: this.trainingSummary.metrics };
+  }
+
+  /**
+   * Blended analysis: 75% classifier + 25% lightweight rules.
+   */
+  analyzeBlended(text) {
+    const model = this.analyzeWithModel(text);
+
+    // Extract classifier probabilities
+    const labelToScore = new Map((model.scores || []).map(s => [s.label, s.value]));
+    // Natural's values are relative; normalize to probabilities
+    const rawFake = labelToScore.get("fake") || 0;
+    const rawReal = labelToScore.get("real") || 0;
+    const denom = rawFake + rawReal || 1;
+    const pFakeClf = Math.max(0, rawFake / denom);
+
+    // Rules score
+    const rules = this.scoreWithRules(text);
+    const pFakeRules = rules.scoreFake;
+
+    // Blend
+    const pFake = 0.75 * pFakeClf + 0.25 * pFakeRules;
+    const predictedCategory = pFake >= 0.5 ? "fake" : "real";
+
+    return {
+      ...model,
+      predictedCategory,
+      probabilities: { fake: pFake, real: 1 - pFake, fromClassifier: pFakeClf, fromRules: pFakeRules },
+      rules
+    };
   }
 
   #buildTfidfFeatures(doc) {

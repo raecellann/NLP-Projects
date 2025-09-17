@@ -12,7 +12,7 @@ export class AnalyzeController {
       if (!text || typeof text !== "string" || text.trim().length === 0) {
         return res.status(400).json({ error: "text is required" });
       }
-      const result = this.nlp.analyzeWithModel(text);
+      const result = this.nlp.analyzeBlended(text);
       res.json(result);
     } catch (e) {
       res.status(500).json({ error: e && e.message ? e.message : String(e) });
@@ -27,7 +27,7 @@ export class AnalyzeController {
       }
       const scrapedData = await this.scraper.scrapeArticleText(url);
       const { text, metadata } = scrapedData;
-      const result = this.nlp.analyzeWithModel(text);
+      const result = this.nlp.analyzeBlended(text);
       res.json({ 
         url, 
         textPreview: text.slice(0, 400), 
@@ -64,7 +64,7 @@ export class AnalyzeController {
       if (!text || text.trim().length === 0) {
         return res.status(400).json({ error: "No text could be extracted from the image" });
       }
-      const result = this.nlp.analyzeWithModel(text);
+      const result = this.nlp.analyzeBlended(text);
       
       res.json({ 
         imageName: file.originalname,

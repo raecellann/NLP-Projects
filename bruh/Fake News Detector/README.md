@@ -7,9 +7,7 @@ A web application that detects fake news using Natural Language Processing (NLP)
 - **📝 Text Analysis**: Direct text input analysis
 - **🔗 URL Analysis**: Extract and analyze content from news article URLs
 - **📷 Image Analysis**: Upload images with text and extract content using OCR
-- **🤖 Dual Detection Methods**:
-  - **Rules-based**: Fast analysis using predefined patterns and heuristics
-  - **Model-based**: Machine learning model trained on news datasets
+- **🤖 Machine Learning Detection**: Advanced NLP model trained on news datasets
 - **📊 Detailed Results**: Confidence scores, red flags, sentiment analysis, and more
 - **🎨 Modern UI**: Beautiful, responsive interface with dark theme
 
@@ -43,43 +41,28 @@ A web application that detects fake news using Natural Language Processing (NLP)
 
 ### 1. Analyze Text
 - Paste article text directly into the text area
-- Choose between Rules or Model analysis method
 - Click "Analyze Text"
 
 ### 2. Analyze URL
 - Enter a news article URL
-- Select analysis method
 - Click "Analyze URL" to fetch and analyze content
 
 ### 3. Analyze Image
 - Click the upload area or drag & drop an image
-- Select analysis method
 - Click "Analyze Image" to extract text and analyze
 
-## 🔧 Analysis Methods
+## 🔧 Analysis Method
 
-### Rules-Based Detection
-- **Speed**: ⚡ Very fast
-- **Training**: ❌ No training required
-- **Accuracy**: Good for obvious fake news patterns
-- **Features**:
-  - Urgency word detection
-  - Money/transfer keyword analysis
-  - Exclamation mark counting
-  - Generic greeting detection
-  - Link presence analysis
-  - Sensational language detection
-  - ALL-CAPS word analysis
-
-### Model-Based Detection
-- **Speed**: 🐌 Slower (requires processing)
+### Machine Learning Detection
+- **Speed**: ⚡ Fast processing
 - **Training**: ✅ Uses trained ML model
-- **Accuracy**: Higher accuracy for complex cases
+- **Accuracy**: High accuracy for complex cases
 - **Features**:
   - Natural language processing
-  - Sentiment analysis
+  - Sentiment analysis using VADER
   - Text preprocessing and tokenization
-  - Bayesian classification
+  - TF-IDF with Logistic Regression or Naive Bayes classification
+  - Model persistence and caching
 
 ## 📊 Understanding Results
 
@@ -88,11 +71,11 @@ A web application that detects fake news using Natural Language Processing (NLP)
 - **🔴 Fake**: News shows signs of being fabricated
 
 ### Result Components
-- **Confidence Score**: How certain the system is (Rules method)
-- **Red Flags**: Specific indicators of fake news
-- **Sentiment Analysis**: Emotional tone of the content
+- **Prediction**: Real or Fake classification
+- **Sentiment Analysis**: Emotional tone of the content using VADER
 - **Extracted Text**: For images, shows the OCR-extracted text
-- **Raw Data**: Complete analysis details
+- **Metadata**: Article information (title, author, publisher, date)
+- **Training Metrics**: Model performance information
 
 ## 🛠️ Technical Stack
 

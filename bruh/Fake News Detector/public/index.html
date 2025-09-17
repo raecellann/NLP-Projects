@@ -1,0 +1,80 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>GALIT AKO SA BISAYA</title>
+    <link rel="stylesheet" href="/styles.css" />
+  </head>
+  <body>
+    <div class="container">
+      <div class="header">
+        <h1 class="title">Fake News Detector</h1>
+        <p class="subtitle">Analyze article text, a URL, or an image using the trained model.</p>
+        <div class="badges">
+          <span class="badge success"><span class="dot"></span> Model: uses dataset</span>
+        </div>
+      </div>
+
+      <div class="grid">
+        <div class="card">
+          <h2>Analyze Text</h2>
+          <p class="helper">Paste article text, then click Analyze.</p>
+          <form id="textForm">
+            <textarea id="textInput" rows="8" placeholder="Paste article text..."></textarea>
+            <div class="row">
+              <div></div>
+              <button type="submit">Analyze Text</button>
+            </div>
+          </form>
+        </div>
+
+        <div class="card">
+          <h2>Analyze URL</h2>
+          <p class="helper">Enter a news article link. The model will fetch and analyze.</p>
+          <form id="urlForm">
+            <input id="urlInput" type="text" placeholder="https://example.com/article" />
+            <div class="row">
+              <div></div>
+              <button class="secondary" type="submit">Analyze URL</button>
+            </div>
+          </form>
+        </div>
+
+        <div class="card">
+          <h2>Analyze Image</h2>
+          <p class="helper">Upload an image with text. OCR will extract text and analyze.</p>
+          <form id="imageForm" enctype="multipart/form-data">
+            <div class="file-upload-container">
+              <input type="file" id="imageInput" accept="image/*" style="display: none;" />
+              <div class="file-upload-area" id="fileUploadArea">
+                <div class="upload-icon">📷</div>
+                <div class="upload-text">
+                  <span class="upload-main">Click to upload image</span>
+                  <span class="upload-sub">or drag and drop</span>
+                </div>
+              </div>
+              <div class="image-preview" id="imagePreview" style="display: none;">
+                <img id="previewImg" alt="Preview" />
+                <button type="button" id="removeImage" class="remove-btn">×</button>
+              </div>
+            </div>
+            <div class="row">
+              <div></div>
+              <button class="tertiary" type="submit">Analyze Image</button>
+            </div>
+          </form>
+        </div>
+      </div>
+
+      <div class="card" style="margin-top:16px;">
+        <h2>Result</h2>
+        <div id="result" class="result">No result yet.</div>
+      </div>
+    </div>
+
+    <script src="/main.js"></script>
+  </body>
+</html>
+
+
